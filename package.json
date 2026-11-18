@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
-    "db:local": "bash scripts/local-db.sh"
+    "db:local": "bash scripts/local-db.sh",
+    "admin:grant": "tsx --env-file=.env.local scripts/grant-admin.ts"
   },
   "dependencies": {
     "better-auth": "1.7.25",

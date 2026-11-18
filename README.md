@@ -23,3 +23,9 @@ Sau khi có DB: `npm run db:migrate`, `npm run dev`; mở http://127.0.0.1:3000.
 - Tích hợp: `docs/operations/providers.md`
 
 Chưa triển khai production. Chưa có credentials thanh toán, AI hoặc media, không có giao dịch thật.
+
+## Tài khoản local và quản trị
+
+Đăng ký tại `/register`. Khi `MAIL_TRANSPORT=local`, đọc thư xác minh trong `.local/mail/*.json` (chỉ local, không có inbox công khai trên website). Sau khi xác minh, đăng nhập, vào `/settings` và bật xác thực hai bước. Chỉ người vận hành có quyền truy cập shell/DB mới chạy `npm run admin:grant -- owner@example.com` để cấp Admin đầu tiên. Không có tài khoản hoặc mật khẩu mặc định.
+
+Ở production phải cấu hình `MAIL_TRANSPORT=resend`, `RESEND_API_KEY`, `MAIL_FROM` và miền gửi đã xác minh. Chế độ thư local bị từ chối khi gửi trong production.
