@@ -1,3 +1,4 @@
+import { releaseExpiredReservations } from "@/modules/checkout/service";
 import { setTimeout } from "node:timers/promises";
 import { workMediaOnce, cleanupExpiredUploads } from "@/modules/media/service";
 import { db } from "./db";
@@ -14,6 +15,7 @@ try {
     try {
       if (Date.now() - lastCleanup > 60000) {
         await cleanupExpiredUploads();
+        await releaseExpiredReservations();
         lastCleanup = Date.now();
       }
       if (!(await workMediaOnce())) await setTimeout(1000);

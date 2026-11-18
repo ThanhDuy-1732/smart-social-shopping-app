@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
@@ -59,9 +60,11 @@ export async function publishPolicy(
     return id;
   });
 }
-export async function getActivePolicy(): Promise<TradingPolicy> {
+export async function getActivePolicy(
+  client: Pick<PoolClient, "query"> = db,
+): Promise<TradingPolicy> {
   const value = (
-    await db.query<TradingPolicy>(
+    await client.query<TradingPolicy>(
       'SELECT id,version::text,active,commission_bps AS "commissionBps",return_days AS "returnDays",seller_accept_hours AS "sellerAcceptHours",settlement_hold_days AS "settlementHoldDays",cancellation_terms AS "cancellationTerms",return_terms AS "returnTerms",receipt_terms AS "receiptTerms",shipping_terms AS "shippingTerms" FROM trading_policy WHERE active=true',
     )
   ).rows[0];

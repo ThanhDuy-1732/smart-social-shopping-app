@@ -36,8 +36,13 @@ async function register(page: Page, name: string) {
   return email;
 }
 test.afterAll(async () => {
-  for (const email of emails)
+  for (const email of emails) {
+    await pool.query(
+      'DELETE FROM checkout WHERE buyer_id IN (SELECT id FROM "user" WHERE email=$1)',
+      [email],
+    );
     await pool.query('DELETE FROM "user" WHERE email=$1', [email]);
+  }
   await pool.query("DELETE FROM category WHERE name='Ngành thử E2E'");
   await pool.end();
 });
@@ -84,6 +89,33 @@ test("registered seller submits application and an MFA admin reviews it", async 
     "INSERT INTO user_role(user_id,role) SELECT id,'admin' FROM \"user\" WHERE email=$1",
     [adminEmail],
   );
+  await adminPage.goto("/admin/policies");
+  await adminPage.getByLabel(/Phí nền tảng/).fill("300");
+  await adminPage
+    .getByLabel("Thời hạn shop xác nhận đơn (giờ)", { exact: true })
+    .fill("24");
+  await adminPage
+    .getByLabel("Thời hạn yêu cầu đổi trả (ngày)", { exact: true })
+    .fill("7");
+  await adminPage
+    .getByLabel("Thời gian chờ đối soát sau nhận hàng (ngày)", { exact: true })
+    .fill("7");
+  await adminPage
+    .getByRole("textbox", { name: "Điều kiện hủy đơn", exact: true })
+    .fill("Hủy trước khi shop xác nhận đơn.");
+  await adminPage
+    .getByRole("textbox", { name: "Điều kiện đổi trả / hoàn tiền", exact: true })
+    .fill("Yêu cầu đổi trả khi hàng sai mô tả.");
+  await adminPage
+    .getByRole("textbox", { name: "Cách xác nhận giao hàng thành công", exact: true })
+    .fill("Khách xác nhận hoặc hỗ trợ kiểm tra.");
+  await adminPage
+    .getByRole("textbox", { name: "Quy định giao hàng và phí vận chuyển", exact: true })
+    .fill("Shop tự giao, phí công bố trước đặt hàng.");
+  await adminPage
+    .getByRole("button", { name: "Công bố chính sách mới", exact: true })
+    .click();
+  await expect(adminPage.getByRole("status")).toContainText("Đã công bố");
   await adminPage.goto("/admin/shops");
   const row = adminPage.getByRole("row").filter({ hasText: "Shop thử E2E" });
   await row
@@ -129,6 +161,40 @@ test("registered seller submits application and an MFA admin reviews it", async 
     .click();
   await expect(
     page.getByRole("heading", { name: "Sản phẩm kiểm tra E2E" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Thêm vào giỏ", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Đã thêm");
+  await page.goto("/seller/shipping");
+  await page.getByLabel("Áp dụng toàn quốc").check();
+  await page.getByLabel("Phí giao hàng (VND)", { exact: true }).fill("30000");
+  await page.getByLabel("Số ngày giao dự kiến", { exact: true }).fill("3");
+  await page
+    .getByRole("button", { name: "Lưu phí giao hàng", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("Đã lưu");
+  await page.goto("/cart");
+  await page.getByLabel("Tỉnh/thành nhận hàng", { exact: true }).fill("Hà Nội");
+  await page
+    .getByRole("button", { name: "Xem tổng tiền", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Xác nhận đặt hàng" }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Họ tên người nhận", { exact: true })
+    .fill("Người nhận E2E");
+  await page.getByLabel("Số điện thoại", { exact: true }).fill("0901234567");
+  await page
+    .getByLabel("Địa chỉ chi tiết", { exact: true })
+    .fill("12 đường thử, phường thử, Hà Nội");
+  await page
+    .getByRole("button", {
+      name: "Tạo đơn và tiếp tục thanh toán",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByText("Thanh toán trực tuyến chưa được mở.", { exact: false }),
   ).toBeVisible();
   await page.goto("/settings");
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();

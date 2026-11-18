@@ -32,6 +32,9 @@ export default async function Seller() {
             <p>
               <Link className="button" href="/seller/products">
                 Quản lý sản phẩm
+              </Link>{" "}
+              <Link className="button secondary" href="/seller/shipping">
+                Phí giao hàng
               </Link>
             </p>
           )}

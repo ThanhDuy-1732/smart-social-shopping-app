@@ -1,3 +1,5 @@
+import { ActionForm } from "@/components/action-form";
+import { addToCart } from "@/app/(account)/cart/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicProduct } from "@/modules/catalog/queries";
@@ -68,7 +70,7 @@ export default async function Product({
                 <tr key={v.id}>
                   <td>{v.label}</td>
                   <td>{BigInt(v.price).toLocaleString("vi-VN")} ₫</td>
-                  <td>{v.stock > 0 ? v.stock : "Tạm hết hàng"}</td>
+                  <td>{v.stock > 0 ? <ActionForm action={addToCart} submitLabel="Thêm vào giỏ"><input type="hidden" name="variantId" value={v.id}/><label>Số lượng<input type="number" name="quantity" min={1} max={Math.min(99,v.stock)} step={1} defaultValue={1} required/></label></ActionForm> : "Tạm hết hàng"}</td>
                 </tr>
               ))}
             </tbody>

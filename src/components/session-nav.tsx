@@ -15,7 +15,7 @@ export function SessionNav() {
     <div className="header-actions">
       {data ? (
         <>
-          <Link href="/seller">Gian hàng</Link>
+          <Link href="/cart">Giỏ hàng</Link><Link href="/seller">Gian hàng</Link>
           <Link className="button secondary" href="/settings">
             Tài khoản
           </Link>
