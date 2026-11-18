@@ -3,6 +3,9 @@ import { randomUUID } from "node:crypto";
 import { getConfig } from "./config";
 type Email = { to: string; subject: string; text: string };
 export async function sendEmail(email: Email): Promise<void> {
+  return deliverEmail(email, randomUUID());
+}
+export async function deliverEmail(email: Email, key: string): Promise<void> {
   const config = getConfig();
   if (config.MAIL_TRANSPORT === "local") {
     if (process.env.NODE_ENV === "production")
@@ -10,7 +13,7 @@ export async function sendEmail(email: Email): Promise<void> {
         "Local mail is not available in production. Configure Resend.",
       );
     await mkdir(".local/mail", { recursive: true, mode: 0o700 });
-    await writeFile(`.local/mail/${randomUUID()}.json`, JSON.stringify(email), {
+    await writeFile(`.local/mail/${key}.json`, JSON.stringify(email), {
       mode: 0o600,
     });
     return;
@@ -22,6 +25,7 @@ export async function sendEmail(email: Email): Promise<void> {
     headers: {
       Authorization: `Bearer ${config.RESEND_API_KEY}`,
       "Content-Type": "application/json",
+      "Idempotency-Key": key,
     },
     body: JSON.stringify({ from: config.MAIL_FROM, ...email }),
     signal: AbortSignal.timeout(10000),

@@ -3,6 +3,7 @@ import { listReports } from "@/modules/moderation/service";
 import { ActionForm } from "@/components/action-form";
 import { resolveReport } from "./actions";
 const labels: Record<string, string> = {
+  message: "Tin nhắn được báo cáo",
   post: "Bài chia sẻ",
   product: "Sản phẩm",
   comment: "Bình luận",

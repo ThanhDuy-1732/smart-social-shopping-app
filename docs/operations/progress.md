@@ -25,3 +25,5 @@ Phase 2: danh mục/thuộc tính đa ngành, biến thể, duyệt sản phẩm
 Phase 3: giỏ/đơn nhiều shop, giữ kho nguyên tử, sự kiện thanh toán idempotent, giao nhận, bằng chứng riêng tư, hoàn một phần và sổ cân đối đã có kiểm thử. Đối soát theo tuần, duyệt và ghi nhận chuyển khoản thủ công; không có công cụ tự chuyển tiền. Live payment/refund provider và đối chiếu phí thực tế chưa kết nối.
 
 Mốc cuối phase 3: 51 integration tests pass, typecheck pass, build pass. Luồng E2E tạo đơn local pass (không thu tiền thật). Hoàn sau khi đã chi trả shop cần quy trình nguồn bù/thu hồi trước production; hiện chặn thao tác để tránh ghi nhận sai tiền.
+
+Chat local: hộp thư riêng, ảnh, thẻ sản phẩm/bài/đơn, trạng thái đọc, chống gửi trùng, chặn người dùng; SSE kiểm tra lại phiên và polling dự phòng. Kiểm duyệt chỉ xem từng tin đã bị báo cáo. Thông báo giao dịch và email qua worker/outbox; local không gửi email ra ngoài. E2E hai phiên gửi/đọc/reload/logout và chặn khách ngoài đã pass.

@@ -15,6 +15,8 @@ export function SessionNav() {
     <div className="header-actions">
       {data ? (
         <>
+          <Link href="/messages">Tin nhắn</Link>
+          <Link href="/notifications">Thông báo</Link>
           <Link href="/cart">Giỏ hàng</Link>
           <Link href="/orders">Đơn mua</Link>
           <Link href="/seller">Gian hàng</Link>

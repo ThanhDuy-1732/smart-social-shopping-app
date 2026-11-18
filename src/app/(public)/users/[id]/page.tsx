@@ -69,7 +69,9 @@ export default async function Profile({
             Chỉnh sửa hồ sơ
           </Link>
         )}
-        {actor&&actor.userId!==id&&<ReportForm kind="user" targetId={id}/>}
+        {actor && actor.userId !== id && (
+          <ReportForm kind="user" targetId={id} />
+        )}
       </section>
       <section style={{ maxWidth: 800 }}>
         {posts.items.map((post) => (

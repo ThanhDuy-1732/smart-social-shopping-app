@@ -11,7 +11,15 @@ import { getPublicProduct } from "@/modules/catalog/queries";
 import { setUserSuspension } from "@/modules/users/service";
 import { setShopSuspension } from "@/modules/shops/service";
 import { DomainError, type Actor } from "@/modules/shared/types";
-const kinds = z.enum(["post", "product", "comment", "review", "shop", "user"]);
+const kinds = z.enum([
+  "post",
+  "product",
+  "comment",
+  "review",
+  "shop",
+  "user",
+  "message",
+]);
 export async function isPubliclyVisible(
   kind: string,
   id: string,
@@ -49,7 +57,17 @@ export async function reportContent(
     );
   const v = parsed.data;
   let visible = false;
-  if (v.kind === "post") visible = Boolean(await getPost(actor, v.targetId));
+  if (v.kind === "message")
+    visible = Boolean(
+      (
+        await db.query(
+          "SELECT 1 FROM chat_message m JOIN conversation c ON c.id=m.conversation_id WHERE m.id=$1 AND (c.first_id=$2 OR c.second_id=$2) AND m.hidden=false",
+          [v.targetId, actor.userId],
+        )
+      ).rowCount,
+    );
+  else if (v.kind === "post")
+    visible = Boolean(await getPost(actor, v.targetId));
   else if (v.kind === "comment") {
     const row = (
       await db.query(
@@ -147,7 +165,8 @@ export async function moderate(
           product: { table: "product", change: "status='hidden'" },
           comment: { table: "post_comment", change: "hidden=true" },
           review: { table: "purchase_review", change: "hidden=true" },
-        }[row.kind as "post" | "product" | "comment" | "review"];
+          message: { table: "chat_message", change: "hidden=true" },
+        }[row.kind as "post" | "product" | "comment" | "review" | "message"];
         if (!target)
           throw new DomainError("INVALID_INPUT", "Loại nội dung chưa hỗ trợ.");
         await c.query(
@@ -175,14 +194,14 @@ export async function listReports(actor: Actor) {
   const allowed = await getAllowedPermissions(actor);
   const visibleKinds: string[] = [];
   if (allowed.includes("content.moderate"))
-    visibleKinds.push("post", "product", "comment", "review");
+    visibleKinds.push("post", "product", "comment", "review", "message");
   if (allowed.includes("users.manage")) visibleKinds.push("user");
   if (allowed.includes("shops.review")) visibleKinds.push("shop");
   if (!visibleKinds.length)
     throw new DomainError("FORBIDDEN", "Bạn không có quyền kiểm duyệt.");
   return (
     await db.query(
-      `SELECT r.id,r.kind,r.target_id AS "targetId",r.reason,r.status,r.resolution,u.name AS "reporterName",CASE r.kind WHEN 'post' THEN (SELECT p.text FROM social_post p WHERE p.id=r.target_id) WHEN 'product' THEN (SELECT p.name||': '||p.description FROM product p WHERE p.id=r.target_id) WHEN 'comment' THEN (SELECT c.text FROM post_comment c WHERE c.id=r.target_id) WHEN 'review' THEN (SELECT v.text FROM purchase_review v WHERE v.id=r.target_id) WHEN 'user' THEN (SELECT name FROM "user" WHERE id=r.target_id) WHEN 'shop' THEN (SELECT name FROM shop WHERE id=r.target_id) END AS preview,CASE r.kind WHEN 'post' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM post_media pm JOIN media m ON m.id=pm.media_id WHERE pm.post_id=r.target_id AND m.status='ready') WHEN 'product' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=r.target_id AND m.status='ready') ELSE '[]'::jsonb END AS media FROM content_report r LEFT JOIN "user" u ON u.id=r.reporter_id WHERE r.kind=ANY($1::text[]) ORDER BY (r.status='open') DESC,r.created_at DESC LIMIT 100`,
+      `SELECT r.id,r.kind,r.target_id AS "targetId",r.reason,r.status,r.resolution,u.name AS "reporterName",CASE r.kind WHEN 'message' THEN (SELECT text FROM chat_message WHERE id=r.target_id) WHEN 'post' THEN (SELECT p.text FROM social_post p WHERE p.id=r.target_id) WHEN 'product' THEN (SELECT p.name||': '||p.description FROM product p WHERE p.id=r.target_id) WHEN 'comment' THEN (SELECT c.text FROM post_comment c WHERE c.id=r.target_id) WHEN 'review' THEN (SELECT v.text FROM purchase_review v WHERE v.id=r.target_id) WHEN 'user' THEN (SELECT name FROM "user" WHERE id=r.target_id) WHEN 'shop' THEN (SELECT name FROM shop WHERE id=r.target_id) END AS preview,CASE r.kind WHEN 'message' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM chat_message cm JOIN media m ON m.id=cm.media_id WHERE cm.id=r.target_id AND m.status='ready') WHEN 'post' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM post_media pm JOIN media m ON m.id=pm.media_id WHERE pm.post_id=r.target_id AND m.status='ready') WHEN 'product' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=r.target_id AND m.status='ready') ELSE '[]'::jsonb END AS media FROM content_report r LEFT JOIN "user" u ON u.id=r.reporter_id WHERE r.kind=ANY($1::text[]) ORDER BY (r.status='open') DESC,r.created_at DESC LIMIT 100`,
       [visibleKinds],
     )
   ).rows;

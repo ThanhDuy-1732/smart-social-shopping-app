@@ -1,3 +1,4 @@
+import { consumeQuota } from "@/server/quota";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
@@ -152,6 +153,7 @@ export async function interact(actor: Actor, input: unknown): Promise<void> {
   if (!(await getPost(actor, v.targetId)))
     throw new DomainError("NOT_FOUND", "Không tìm thấy bài viết.");
   if (v.type === "comment") {
+    await consumeQuota(actor.userId, "comment", 60, 60);
     await db.query(
       "INSERT INTO post_comment(id,post_id,author_id,text) VALUES($1,$2,$3,$4)",
       [randomUUID(), v.targetId, actor.userId, v.text],

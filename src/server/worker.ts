@@ -2,6 +2,7 @@ import { refreshEligibleBalances } from "@/modules/finance/service";
 import { releaseExpiredReservations } from "@/modules/checkout/service";
 import { setTimeout } from "node:timers/promises";
 import { workMediaOnce, cleanupExpiredUploads } from "@/modules/media/service";
+import { workEmailOnce } from "./email-outbox";
 import { db } from "./db";
 let stopping = false;
 let lastCleanup = 0;
@@ -20,7 +21,9 @@ try {
         await refreshEligibleBalances();
         lastCleanup = Date.now();
       }
-      if (!(await workMediaOnce())) await setTimeout(1000);
+      const mediaWorked = await workMediaOnce();
+      const emailWorked = await workEmailOnce();
+      if (!mediaWorked && !emailWorked) await setTimeout(1000);
     } catch (error) {
       console.error("Worker failed", {
         name: error instanceof Error ? error.name : "UnknownError",

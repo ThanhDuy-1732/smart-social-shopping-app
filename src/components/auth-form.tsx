@@ -62,7 +62,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         });
         if (result.error)
           throw new Error(
-            "Chưa tạo được tài khoản. Kiểm tra thông tin hoặc thử đăng nhập nếu đã đăng ký.",
+            result.error.status===429 ? "Bạn đã thử nhiều lần. Vui lòng chờ một lát rồi thử lại." : "Chưa tạo được tài khoản. Kiểm tra thông tin hoặc thử đăng nhập nếu đã đăng ký.",
           );
         setMessage("Vui lòng mở email xác minh trước khi đăng nhập.");
       } else if (mode === "forgot") {

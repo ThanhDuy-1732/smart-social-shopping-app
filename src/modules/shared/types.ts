@@ -8,7 +8,8 @@ export type ErrorCode =
   | "INVALID_INPUT"
   | "NOT_FOUND"
   | "CONFLICT"
-  | "PROVIDER_UNAVAILABLE";
+  | "PROVIDER_UNAVAILABLE"
+  | "RATE_LIMITED";
 export class DomainError extends Error {
   constructor(
     public code: ErrorCode,

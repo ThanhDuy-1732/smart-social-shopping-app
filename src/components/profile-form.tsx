@@ -42,6 +42,7 @@ export function ProfileForm({
         onChange={setMedia}
         onPendingChange={setUploading}
         maxItems={1}
+        imagesOnly
       />
       <p className="hint">Chọn ảnh cho ảnh đại diện.</p>
     </ActionForm>

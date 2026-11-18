@@ -15,9 +15,16 @@ async function register(page: Page, name: string) {
   await page.getByLabel("Tên hiển thị").fill(name);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  const responsePromise=page.waitForResponse(r=>r.url().endsWith('/sign-up/email'));
   await page
     .getByRole("button", { name: "Tạo tài khoản", exact: true })
     .click();
+  const signupResponse=await responsePromise;
+  if(signupResponse.status()===429){
+    await new Promise(resolve=>setTimeout(resolve,(Number(signupResponse.headers()['x-retry-after'])||10)*1000+100));
+    await page.getByRole('button',{name:'Tạo tài khoản',exact:true}).click();
+  }
+
   await expect(page.getByRole("status")).toContainText("xác minh");
   const messages = await Promise.all(
     (await readdir(".local/mail")).map(async (f) =>
@@ -241,4 +248,66 @@ test("mobile registration form fits viewport and has accessible controls", async
   ).toBe(true);
   await page.getByLabel("Tên hiển thị").focus();
   await expect(page.getByLabel("Tên hiển thị")).toBeFocused();
+});
+test("private chat delivers between two sessions, rejects outsiders and reconnects", async ({
+  page,
+  browser,
+}) => {
+  const emailA = await register(page, "Người trò chuyện A");
+  const otherContext = await browser.newContext(),
+    other = await otherContext.newPage();
+  const emailB = await register(other, "Người trò chuyện B");
+  const ids = (
+    await pool.query(
+      'SELECT id,email FROM "user" WHERE email=ANY($1::text[])',
+      [[emailA, emailB]],
+    )
+  ).rows;
+  const b = ids.find((r) => r.email === emailB).id;
+  await page.goto(`/messages?peer=${b}`);
+  await expect(page).toHaveURL(/messages\/[a-f0-9-]+$/);
+  const path = new URL(page.url()).pathname;
+  await page
+    .getByRole("textbox", { name: "Tin nhắn", exact: true })
+    .fill("Xin chào từ phiên A");
+  await page.getByRole("button", { name: "Gửi tin nhắn", exact: true }).click();
+  await expect(page.getByRole("log")).toContainText("Xin chào từ phiên A");
+  await other.goto(path);
+  await expect(other.getByRole("log")).toContainText("Xin chào từ phiên A");
+  await other
+    .getByRole("textbox", { name: "Tin nhắn", exact: true })
+    .fill("Đã nhận tin từ A");
+  await other
+    .getByRole("button", { name: "Gửi tin nhắn", exact: true })
+    .click();
+  await expect(page.getByRole("log")).toContainText("Đã nhận tin từ A");
+  await expect(page.getByRole("log")).toContainText("Đã đọc");
+  await other.reload();
+  await expect(other.getByRole("log")).toContainText("Đã nhận tin từ A");
+  const outsider = await browser.newContext();
+  const outsiderPage = await outsider.newPage();
+  expect(
+    (
+      await outsiderPage.request.get(
+        `/api/chat/conversations/${path.split("/").pop()}`,
+      )
+    ).status(),
+  ).toBe(401);
+  expect(
+    (
+      await outsiderPage.request.get(
+        `/api/chat/events?conversationId=${path.split("/").pop()}`,
+      )
+    ).status(),
+  ).toBe(401);
+  await outsider.close();
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(
+    (
+      await page.request.get(`/api/chat/conversations/${path.split("/").pop()}`)
+    ).status(),
+  ).toBe(401);
+  await otherContext.close();
 });

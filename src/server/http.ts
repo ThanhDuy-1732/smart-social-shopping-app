@@ -46,6 +46,7 @@ export function apiError(error: unknown): Response {
       NOT_FOUND: 404,
       CONFLICT: 409,
       PROVIDER_UNAVAILABLE: 503,
+      RATE_LIMITED: 429,
     }[error.code];
     return Response.json(
       { error: error.message },

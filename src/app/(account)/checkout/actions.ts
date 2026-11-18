@@ -29,7 +29,8 @@ export async function placeOrder(
     );
     id = checkout.id;
   } catch (error) {
-    if(error instanceof DomainError&&error.code==='CONFLICT')revalidatePath('/checkout');
+    if (error instanceof DomainError && error.code === "CONFLICT")
+      revalidatePath("/checkout");
     return actionError(error);
   }
   redirect(`/checkout/${id}`);

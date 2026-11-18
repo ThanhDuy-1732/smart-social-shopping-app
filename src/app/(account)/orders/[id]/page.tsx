@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ReceiptVerificationForm } from "@/components/receipt-verification-form";
 import { getAllowedPermissions } from "@/modules/access/service";
 import { notFound } from "next/navigation";
@@ -35,6 +36,14 @@ export default async function Order({
           {orderLabels[order.status] ?? order.status}
         </span>
       </div>
+      {(buyer || owner) && (
+        <Link
+          className="button secondary"
+          href={`/messages?peer=${buyer ? order.ownerId : order.buyerId}&kind=order&ref=${order.id}`}
+        >
+          {buyer ? "Nhắn shop" : "Nhắn người mua"}
+        </Link>
+      )}
       <div className="two-col">
         <section className="panel">
           <h2>Sản phẩm đã đặt</h2>

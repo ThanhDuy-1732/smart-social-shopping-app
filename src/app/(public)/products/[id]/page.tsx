@@ -26,6 +26,12 @@ export default async function Product({
           <Link href={`/shops/${product.shopId}`}>{product.shopName}</Link>
         </p>
         <h1>{product.name}</h1>
+        <Link
+          className="button secondary"
+          href={`/messages?shop=${product.shopId}&kind=product&ref=${product.id}`}
+        >
+          Nhắn shop về sản phẩm
+        </Link>
         <div className="grid">
           {product.media.map((m) =>
             m.kind === "image" ? (

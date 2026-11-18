@@ -1,3 +1,4 @@
+import { notifyUser } from "@/modules/notifications/service";
 import { recordPaymentReceipt } from "@/modules/finance/service";
 import { z } from "zod";
 import { createHash, randomUUID } from "node:crypto";
@@ -198,6 +199,33 @@ export async function applyVerifiedPaymentEvent(input: unknown): Promise<void> {
       );
     }
     await recordPaymentReceipt(client, checkout.id);
+    await notifyUser(
+      checkout.buyer_id,
+      {
+        eventKey: `payment:${checkout.id}`,
+        title: "Đã ghi nhận thanh toán",
+        href: `/checkout/${checkout.id}`,
+        email: true,
+      },
+      client,
+    );
+    for (const order of (
+      await client.query(
+        "SELECT o.id,s.owner_user_id FROM shop_order o JOIN shop s ON s.id=o.shop_id WHERE o.checkout_id=$1",
+        [checkout.id],
+      )
+    ).rows)
+      await notifyUser(
+        order.owner_user_id,
+        {
+          eventKey: `paid-order:${order.id}`,
+          title: "Bạn có đơn hàng cần kiểm tra",
+          href: `/orders/${order.id}`,
+          email: true,
+        },
+        client,
+      );
+
     await client.query(
       "UPDATE payment_intent SET status='paid',paid_at=now() WHERE id=$1",
       [payment.id],

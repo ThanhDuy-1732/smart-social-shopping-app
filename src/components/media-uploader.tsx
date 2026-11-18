@@ -6,11 +6,13 @@ export function MediaUploader({
   onChange,
   onPendingChange,
   maxItems = 12,
+  imagesOnly = false,
 }: {
   items: ReadyMedia[];
   onChange: (items: ReadyMedia[]) => void;
   onPendingChange: (pending: boolean) => void;
   maxItems?: number;
+  imagesOnly?: boolean;
 }) {
   const [pending, setPending] = useState(false),
     [message, setMessage] = useState("");
@@ -58,10 +60,14 @@ export function MediaUploader({
   return (
     <div>
       <label>
-        Ảnh và video
+        {imagesOnly ? "Ảnh" : "Ảnh và video"}
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4"
+          accept={
+            imagesOnly
+              ? "image/jpeg,image/png,image/webp"
+              : "image/jpeg,image/png,image/webp,video/mp4"
+          }
           disabled={pending || items.length >= maxItems}
           onChange={(e) => {
             const file = e.target.files?.[0];

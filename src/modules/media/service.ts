@@ -1,3 +1,4 @@
+import { consumeQuota } from "@/server/quota";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile, rm, rename } from "node:fs/promises";
@@ -42,6 +43,7 @@ export async function requestUpload(
       "INVALID_INPUT",
       "Ảnh tối đa 10 MB; video MP4 tối đa 50 MB.",
     );
+  await consumeQuota(actor.userId, "upload", 30, 3600);
   const id = randomUUID();
   await db.query(
     "INSERT INTO media(id,owner_id,kind,max_bytes) VALUES($1,$2,$3,$4)",
@@ -214,6 +216,37 @@ export async function readMedia(
         )
       ).rowCount,
     );
+  if (!allowed && actor) {
+    allowed = Boolean(
+      (
+        await db.query(
+          "SELECT 1 FROM chat_message m JOIN conversation c ON c.id=m.conversation_id WHERE m.media_id=$1 AND m.hidden=false AND (c.first_id=$2 OR c.second_id=$2)",
+          [id, actor.userId],
+        )
+      ).rowCount,
+    );
+    if (
+      !allowed &&
+      (await getAllowedPermissions(actor)).includes("content.moderate") &&
+      (
+        await db.query(
+          "SELECT 1 FROM chat_message m JOIN content_report r ON r.kind='message' AND r.target_id=m.id WHERE m.media_id=$1",
+          [id],
+        )
+      ).rowCount
+    ) {
+      allowed = true;
+      await db.query(
+        "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'evidence.read',$3,$4)",
+        [
+          randomUUID(),
+          actor.userId,
+          id,
+          JSON.stringify({ scope: "reported-message" }),
+        ],
+      );
+    }
+  }
   if (!allowed) throw new DomainError("NOT_FOUND", "Không tìm thấy tệp.");
   return {
     bytes: await readFile(

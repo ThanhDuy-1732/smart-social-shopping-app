@@ -1,3 +1,4 @@
+import { notifyUser } from "@/modules/notifications/service";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
@@ -263,6 +264,17 @@ export async function transitionOrder(
         );
       }
     }
+    for (const userId of new Set([detail.buyerId, detail.ownerId]))
+      await notifyUser(
+        userId,
+        {
+          eventKey: `order:${id}:${action.type}`,
+          title: "Đơn hàng của bạn đã cập nhật",
+          href: `/orders/${id}`,
+          email: true,
+        },
+        client,
+      );
     await client.query(
       "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,$3,$4,$5)",
       [
