@@ -1,3 +1,5 @@
+import { listLists } from "@/modules/discovery/service";
+import { saveProductToList } from "@/app/(account)/lists/actions";
 import { optionalActor } from "@/server/optional-actor";
 import { ReportForm } from "@/components/report-form";
 import { getPublicReviews } from "@/modules/reviews/service";
@@ -15,6 +17,7 @@ export default async function Product({
   const product = await getPublicProduct((await params).id);
   if (!product) notFound();
   const actor = await optionalActor();
+  const lists=actor?await listLists(actor):[];
   const reviews = await getPublicReviews(product.id);
   return (
     <>
@@ -58,6 +61,7 @@ export default async function Product({
         </p>
         <p style={{ whiteSpace: "pre-wrap" }}>{product.description}</p>
         {actor && <ReportForm kind="product" targetId={product.id} />}
+        {actor&&<details><summary>Lưu sản phẩm vào danh sách</summary><ActionForm action={saveProductToList} submitLabel="Lưu sản phẩm"><input type="hidden" name="productId" value={product.id}/><label>Danh sách<select name="listId"><option value="">Tạo danh sách mới</option>{lists.map(l=><option value={l.id} key={l.id}>{l.title}</option>)}</select></label></ActionForm></details>}
         <h2>Thông tin sản phẩm</h2>
         <dl>
           {Object.entries(product.attributes).map(([key, value]) => (

@@ -301,6 +301,15 @@ test("private chat delivers between two sessions, rejects outsiders and reconnec
     ).status(),
   ).toBe(401);
   await outsider.close();
+  await page.goto('/discover?q='+encodeURIComponent('Tôi muốn đi Trung Quốc'));
+  await expect(page.getByText('Chế độ local theo mẫu và từ khóa. AI chưa được kết nối.')).toBeVisible();
+  await page.getByRole('textbox',{name:'Tên danh sách',exact:true}).fill('Hành lý chuyến đi');
+  await page.getByRole('button',{name:'Lưu danh sách',exact:true}).click();
+  await expect(page).toHaveURL(/lists\/[a-f0-9-]+$/);
+  await expect(page.getByRole('heading',{name:'Hành lý chuyến đi',exact:true})).toBeVisible();
+  await page.getByRole('checkbox').first().check();
+  await page.getByRole('button',{name:'Lưu danh sách',exact:true}).click();
+  await expect(page.getByRole('checkbox').first()).toBeChecked();
   await page.goto("/settings");
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
