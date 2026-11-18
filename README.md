@@ -29,3 +29,9 @@ Chưa triển khai production. Chưa có credentials thanh toán, AI hoặc medi
 Đăng ký tại `/register`. Khi `MAIL_TRANSPORT=local`, đọc thư xác minh trong `.local/mail/*.json` (chỉ local, không có inbox công khai trên website). Sau khi xác minh, đăng nhập, vào `/settings` và bật xác thực hai bước. Chỉ người vận hành có quyền truy cập shell/DB mới chạy `npm run admin:grant -- owner@example.com` để cấp Admin đầu tiên. Không có tài khoản hoặc mật khẩu mặc định.
 
 Ở production phải cấu hình `MAIL_TRANSPORT=resend`, `RESEND_API_KEY`, `MAIL_FROM` và miền gửi đã xác minh. Chế độ thư local bị từ chối khi gửi trong production.
+
+## Media local
+
+Chạy thêm `npm run worker` trong terminal thứ hai. Cần `ffmpeg` có trong PATH (hoặc đặt `FFMPEG_PATH`). Ảnh được decode/resize và chuyển WebP bằng sharp; MP4 được chuyển mã H.264/AAC tối đa 2 phút. Tệp gốc và dữ liệu thư/DB nằm trong `.local/`, không public trực tiếp. Chỉ tệp đã sẵn sàng và được đính vào sản phẩm công khai mới đọc được khi chưa đăng nhập; người tải lên xem được tệp riêng của mình.
+
+Media local phục vụ phát triển một máy, bị chặn upload trong production. Cần dịch vụ media/kho bền vững và kiểm chứng tích hợp trước khi mở cho người dùng thật. Worker giữ job trong PostgreSQL, có lease và retry, không dựa vào bộ nhớ tiến trình.

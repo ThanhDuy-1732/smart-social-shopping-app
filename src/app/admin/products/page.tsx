@@ -1,5 +1,56 @@
-import { pageActor } from '@/server/page-access';
-import { listProductsForReview } from '@/modules/catalog/queries';
-import { ActionForm } from '@/components/action-form';
-import { reviewProduct } from './actions';
-export default async function Products(){const actor=await pageActor('content.moderate');const products=await listProductsForReview(actor);return <><h1>Duyệt sản phẩm</h1><div className="panel table-wrap">{products.length?<table><thead><tr><th>Sản phẩm</th><th>Gian hàng</th><th>Trạng thái</th><th>Quyết định</th></tr></thead><tbody>{products.map(p=><tr key={p.id}><td><strong>{p.name}</strong><p style={{whiteSpace:'pre-wrap'}}>{p.description}</p></td><td>{p.shopName}</td><td>{p.status}</td><td><ActionForm action={reviewProduct} submitLabel="Lưu quyết định"><input type="hidden" name="productId" value={p.id}/><label>Trạng thái mới<select name="decision"><option value="publish">Cho phép mở bán</option><option value="hide">Ẩn sản phẩm</option></select></label></ActionForm></td></tr>)}</tbody></table>:<p className="muted">Chưa có sản phẩm cần xét duyệt.</p>}</div></>;}
+import { pageActor } from "@/server/page-access";
+import { listProductsForReview } from "@/modules/catalog/queries";
+import { ActionForm } from "@/components/action-form";
+import { reviewProduct } from "./actions";
+export default async function Products() {
+  const actor = await pageActor("content.moderate");
+  const products = await listProductsForReview(actor);
+  return (
+    <>
+      <h1>Duyệt sản phẩm</h1>
+      <div className="panel table-wrap">
+        {products.length ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th>Gian hàng</th>
+                <th>Trạng thái</th>
+                <th>Quyết định</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <strong>{p.name}</strong>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{p.description}</p>
+                  </td>
+                  <td>{p.shopName}</td>
+                  <td>{p.status}</td>
+                  <td>
+                    <ActionForm
+                      action={reviewProduct}
+                      submitLabel="Lưu quyết định"
+                    >
+                      <input type="hidden" name="productId" value={p.id} />
+                      <label>
+                        Trạng thái mới
+                        <select name="decision">
+                          <option value="publish">Cho phép mở bán</option>
+                          <option value="hide">Ẩn sản phẩm</option>
+                        </select>
+                      </label>
+                    </ActionForm>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="muted">Chưa có sản phẩm cần xét duyệt.</p>
+        )}
+      </div>
+    </>
+  );
+}

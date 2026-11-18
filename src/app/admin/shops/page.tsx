@@ -1,8 +1,97 @@
-import { pageActor } from '@/server/page-access';
-import { listShopApplications } from '@/modules/shops/service';
-import { ActionForm } from '@/components/action-form';
-import { reviewApplication } from './actions';
+import { pageActor } from "@/server/page-access";
+import { listShopApplications } from "@/modules/shops/service";
+import { ActionForm } from "@/components/action-form";
+import { reviewApplication } from "./actions";
 export default async function Shops() {
-  const actor=await pageActor('shops.review'); const shops=await listShopApplications(actor);
-  return <><h1>Xét duyệt nhà bán</h1><p className="muted">Xem 100 hồ sơ mới nhất. Xác minh thông tin trước khi cho phép mở bán.</p>{!shops.length ? <div className="panel empty"><h2>Chưa có hồ sơ đăng ký</h2><p className="muted">Hồ sơ của nhà bán sẽ xuất hiện tại đây.</p></div> : <div className="panel table-wrap"><table><thead><tr><th>Gian hàng</th><th>Thông tin xác minh</th><th>Xét duyệt</th></tr></thead><tbody>{shops.map(shop=><tr key={shop.id}><td><strong>{shop.name}</strong><p>{shop.description}</p><small>{shop.phone}<br/>{shop.address}</small></td><td>{shop.legalName}<br/>{shop.bankName} · •••• {shop.bankAccountLast4}<br/><small>{shop.bankHolder}</small></td><td>{shop.status==='pending' && shop.ownerUserId!==actor.userId ? <ActionForm action={reviewApplication} submitLabel="Lưu quyết định"><input type="hidden" name="shopId" value={shop.id}/><label>Quyết định<select name="decision"><option value="approve">Chấp thuận</option><option value="reject">Yêu cầu bổ sung</option></select></label><label>Lý do xét duyệt<textarea name="reason" minLength={10} maxLength={1000} required/></label></ActionForm> : <><span className="status">{{pending:'Chờ người khác xét duyệt',approved:'Đã duyệt',rejected:'Cần bổ sung',suspended:'Tạm khóa'}[shop.status]}</span><p>{shop.reviewReason}</p></>}</td></tr>)}</tbody></table></div>}</>;
+  const actor = await pageActor("shops.review");
+  const shops = await listShopApplications(actor);
+  return (
+    <>
+      <h1>Xét duyệt nhà bán</h1>
+      <p className="muted">
+        Xem 100 hồ sơ mới nhất. Xác minh thông tin trước khi cho phép mở bán.
+      </p>
+      {!shops.length ? (
+        <div className="panel empty">
+          <h2>Chưa có hồ sơ đăng ký</h2>
+          <p className="muted">Hồ sơ của nhà bán sẽ xuất hiện tại đây.</p>
+        </div>
+      ) : (
+        <div className="panel table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Gian hàng</th>
+                <th>Thông tin xác minh</th>
+                <th>Xét duyệt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shops.map((shop) => (
+                <tr key={shop.id}>
+                  <td>
+                    <strong>{shop.name}</strong>
+                    <p>{shop.description}</p>
+                    <small>
+                      {shop.phone}
+                      <br />
+                      {shop.address}
+                    </small>
+                  </td>
+                  <td>
+                    {shop.legalName}
+                    <br />
+                    {shop.bankName} · •••• {shop.bankAccountLast4}
+                    <br />
+                    <small>{shop.bankHolder}</small>
+                  </td>
+                  <td>
+                    {shop.status === "pending" &&
+                    shop.ownerUserId !== actor.userId ? (
+                      <ActionForm
+                        action={reviewApplication}
+                        submitLabel="Lưu quyết định"
+                      >
+                        <input type="hidden" name="shopId" value={shop.id} />
+                        <label>
+                          Quyết định
+                          <select name="decision">
+                            <option value="approve">Chấp thuận</option>
+                            <option value="reject">Yêu cầu bổ sung</option>
+                          </select>
+                        </label>
+                        <label>
+                          Lý do xét duyệt
+                          <textarea
+                            name="reason"
+                            minLength={10}
+                            maxLength={1000}
+                            required
+                          />
+                        </label>
+                      </ActionForm>
+                    ) : (
+                      <>
+                        <span className="status">
+                          {
+                            {
+                              pending: "Chờ người khác xét duyệt",
+                              approved: "Đã duyệt",
+                              rejected: "Cần bổ sung",
+                              suspended: "Tạm khóa",
+                            }[shop.status]
+                          }
+                        </span>
+                        <p>{shop.reviewReason}</p>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
 }

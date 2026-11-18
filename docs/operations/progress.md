@@ -1,8 +1,8 @@
 # Tiến độ triển khai
 
 - Phase 1 — nền dự án, tài khoản, quyền, duyệt shop (Tasks 1–3): hoàn tất local.
-- Phase 2 — danh mục/sản phẩm và media (Tasks 4–5): đang thực hiện.
-- Phase 3 — giỏ hàng, đơn, thanh toán và đối soát (Tasks 6–9): chưa thực hiện.
+- Phase 2 — danh mục/sản phẩm và media (Tasks 4–5): hoàn tất local; cloud media còn chờ.
+- Phase 3 — giỏ hàng, đơn, thanh toán và đối soát (Tasks 6–9): đang thực hiện.
 - Phase 4 — Social, kiểm duyệt, chat và AI (Tasks 10–13): chưa thực hiện.
 - Phase 5 — PWA, báo cáo, vận hành và nghiệm thu (Tasks 14–16): chưa thực hiện.
 
@@ -19,3 +19,5 @@ Chưa có credentials, tài khoản dịch vụ hoặc hợp đồng thanh toán
 `npm audit` sau khi cập nhật Zod còn 5 cảnh báo high theo chuỗi picomatch → fdir/tinyglobby → vite/vitest. Đây là công cụ kiểm thử/build, không phải dependency chạy ứng dụng production; npm hiện không cung cấp bản sửa tương thích qua audit fix. Không dùng audit fix --force để hạ version lớn tùy tiện. Cần kiểm tra lại trước phát hành.
 
 Phase 1: 17 integration tests pass; 2 browser E2E tests pass (đăng ký/xác minh/login, MFA, quyền Admin, đăng ký/duyệt shop, logout, form mobile). Typecheck và production build pass. Tích hợp email thực chưa kiểm chứng.
+
+Phase 2: danh mục/thuộc tính đa ngành, biến thể, duyệt sản phẩm, tìm kiếm tiếng Việt, sửa sản phẩm và upload ảnh/video local đã có. Worker dùng job/lease trong PostgreSQL. E2E đăng sản phẩm → duyệt → tìm và xem chi tiết đã pass. Upload cloud và sandbox provider còn chờ theo lựa chọn tiếp tục local của chủ sản phẩm.
