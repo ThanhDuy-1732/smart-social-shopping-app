@@ -420,7 +420,7 @@ export async function releaseExpiredReservations(): Promise<number> {
         "UPDATE inventory_reservation SET status='released' WHERE checkout_id=$1 AND status='held'",
         [row.id],
       );
-      await client.query("UPDATE checkout SET status='expired' WHERE id=$1", [
+      await client.query("UPDATE checkout SET status='expired',cancel_reason='timeout' WHERE id=$1", [
         row.id,
       ]);
       await client.query(

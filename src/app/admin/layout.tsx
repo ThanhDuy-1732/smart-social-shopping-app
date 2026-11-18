@@ -15,7 +15,7 @@ export default async function AdminLayout({
         <Link href="/admin/policies">Chính sách</Link>
         <Link href="/admin/categories">Danh mục</Link>
         <Link href="/admin/products">Sản phẩm</Link>
-        <Link href="/admin/jobs">Tác vụ nền</Link>
+        <Link href="/admin/jobs">Tác vụ nền</Link><Link href="/admin/payments">Thanh toán</Link>
       </nav>
       {children}
     </>
