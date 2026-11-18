@@ -21,7 +21,7 @@ async function register(page:Page,name:string) {
   await expect(page).toHaveURL(/\/settings$/);
   return email;
 }
-test.afterAll(async()=>{for(const email of emails) await pool.query('DELETE FROM "user" WHERE email=$1',[email]);await pool.end();});
+test.afterAll(async()=>{for(const email of emails) await pool.query('DELETE FROM "user" WHERE email=$1',[email]);await pool.query("DELETE FROM category WHERE name='Ngành thử E2E'");await pool.end();});
 test('registered seller submits application and an MFA admin reviews it',async({page,browser})=>{
   const ownerEmail=await register(page,'Nhà bán thử');
   await page.goto('/admin/users');await expect(page).toHaveURL(/access=denied/);
@@ -42,6 +42,10 @@ test('registered seller submits application and an MFA admin reviews it',async({
   await row.getByLabel('Lý do xét duyệt').fill('Đã kiểm tra hồ sơ thử và thông tin nhận tiền');await row.getByRole('button',{name:'Lưu quyết định'}).click();
   await expect(row.getByText('Đã duyệt',{exact:true})).toBeVisible();
   await page.goto('/seller');await expect(page.getByText('Đã được duyệt',{exact:true})).toBeVisible();
+  await adminPage.goto('/admin/categories');await adminPage.getByLabel('Tên danh mục',{exact:true}).fill('Ngành thử E2E');await adminPage.getByRole('button',{name:'Tạo danh mục',exact:true}).click();await expect(adminPage.getByRole('status')).toContainText('Đã tạo');
+  await page.goto('/seller/products/new');await page.getByLabel('Tên sản phẩm',{exact:true}).fill('Sản phẩm kiểm tra E2E');await page.getByLabel('Mô tả',{exact:true}).fill('Mô tả sản phẩm kiểm tra đăng và duyệt.');await page.getByLabel('Ngành hàng',{exact:true}).selectOption({label:'Ngành thử E2E'});await page.getByLabel('Mã SKU',{exact:true}).fill('SKU-'+randomUUID());await page.getByLabel('Tên biến thể',{exact:true}).fill('Bản tiêu chuẩn');await page.getByLabel('Giá (VND)',{exact:true}).fill('250000');await page.getByLabel('Tồn kho',{exact:true}).fill('2');await page.getByRole('button',{name:'Lưu và gửi duyệt'}).click();await expect(page.getByRole('status')).toContainText('Đã lưu');
+  await adminPage.goto('/admin/products');const productRow=adminPage.getByRole('row').filter({hasText:'Sản phẩm kiểm tra E2E'});await productRow.getByRole('button',{name:'Lưu quyết định'}).click();await expect(productRow.getByRole('status')).toContainText('Đã cập nhật');
+  await page.goto('/search?q=Sản+phẩm+kiểm+tra+E2E');await page.getByRole('link',{name:'Sản phẩm kiểm tra E2E',exact:true}).click();await expect(page.getByRole('heading',{name:'Sản phẩm kiểm tra E2E'})).toBeVisible();
   await page.goto('/settings');await page.getByRole('button',{name:'Đăng xuất',exact:true}).click();await expect(page).toHaveURL(/\/login$/);await page.goto('/seller');await expect(page).toHaveURL(/\/login$/);
   await context.close();
   expect(ownerEmail).not.toBe(adminEmail);

@@ -2,7 +2,7 @@ import { auth } from '@/server/auth';
 import { db } from '@/server/db';
 import { DomainError, type Actor } from '@/modules/shared/types';
 const permissions: Record<string, string[]> = {
-  'users.manage': ['admin'], 'shops.review': ['admin'], 'policies.manage': ['admin'],
+  'users.manage': ['admin'], 'catalog.manage': ['admin'], 'shops.review': ['admin'], 'policies.manage': ['admin'],
   'content.moderate': ['admin', 'moderator'], 'finance.manage': ['admin', 'finance'],
   'reports.platform': ['admin', 'finance'], 'disputes.manage': ['admin', 'support'],
 };

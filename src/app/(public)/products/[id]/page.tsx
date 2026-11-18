@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getPublicProduct } from '@/modules/catalog/queries';
+export const dynamic='force-dynamic';
+export default async function Product({params}:{params:Promise<{id:string}>}){const product=await getPublicProduct((await params).id);if(!product)notFound();return <><p><Link href="/search">Mua sắm</Link> / {product.categoryName}</p><div className="panel"><p><Link href={`/shops/${product.shopId}`}>{product.shopName}</Link></p><h1>{product.name}</h1><p className="metric">{BigInt(product.price).toLocaleString('vi-VN')} ₫</p><p style={{whiteSpace:'pre-wrap'}}>{product.description}</p><h2>Thông tin sản phẩm</h2><dl>{Object.entries(product.attributes).map(([key,value])=><div key={key}><dt className="muted">{key}</dt><dd>{value}</dd></div>)}</dl><h2>Biến thể</h2><div className="table-wrap"><table><thead><tr><th>Biến thể</th><th>Giá</th><th>Tồn kho</th></tr></thead><tbody>{product.variants.map(v=><tr key={v.id}><td>{v.label}</td><td>{BigInt(v.price).toLocaleString('vi-VN')} ₫</td><td>{v.stock>0?v.stock:'Tạm hết hàng'}</td></tr>)}</tbody></table></div></div></>;}
