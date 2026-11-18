@@ -181,7 +181,35 @@ export async function readMedia(
       }
     }
   }
-  if(!allowed&&actor){const batches=(await db.query('SELECT s.owner_user_id AS owner FROM settlement b JOIN shop s ON s.id=b.shop_id WHERE b.evidence_id=$1',[id])).rows;allowed=batches.some(b=>b.owner===actor.userId);if(!allowed&&batches.length&&(await getAllowedPermissions(actor)).includes('finance.manage')){allowed=true;await db.query("INSERT INTO audit_event(id,actor_id,action,target_id) VALUES($1,$2,'evidence.read',$3)",[randomUUID(),actor.userId,id]);}}
+  if (!allowed && actor) {
+    const batches = (
+      await db.query(
+        "SELECT s.owner_user_id AS owner FROM settlement b JOIN shop s ON s.id=b.shop_id WHERE b.evidence_id=$1",
+        [id],
+      )
+    ).rows;
+    allowed = batches.some((b) => b.owner === actor.userId);
+    if (
+      !allowed &&
+      batches.length &&
+      (await getAllowedPermissions(actor)).includes("finance.manage")
+    ) {
+      allowed = true;
+      await db.query(
+        "INSERT INTO audit_event(id,actor_id,action,target_id) VALUES($1,$2,'evidence.read',$3)",
+        [randomUUID(), actor.userId, id],
+      );
+    }
+  }
+  if (!allowed)
+    allowed = Boolean(
+      (
+        await db.query(
+          'SELECT 1 FROM post_media pm JOIN social_post p ON p.id=pm.post_id JOIN "user" u ON u.id=p.author_id WHERE pm.media_id=$1 AND p.status=\'published\' AND u."emailVerified"=true AND NOT EXISTS(SELECT 1 FROM account_state a WHERE a.user_id=u.id AND a.suspended=true) UNION ALL SELECT 1 FROM user_profile pr JOIN "user" u ON u.id=pr.user_id WHERE pr.avatar_id=$1 AND u."emailVerified"=true AND NOT EXISTS(SELECT 1 FROM account_state a WHERE a.user_id=u.id AND a.suspended=true)',
+          [id],
+        )
+      ).rowCount,
+    );
   if (!allowed) throw new DomainError("NOT_FOUND", "Không tìm thấy tệp.");
   return {
     bytes: await readFile(

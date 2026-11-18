@@ -1,0 +1,12 @@
+CREATE TABLE user_profile(user_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,bio text NOT NULL DEFAULT '',avatar_id text REFERENCES media(id));
+CREATE TABLE social_post(id text PRIMARY KEY,author_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,text text NOT NULL,topics text[] NOT NULL DEFAULT '{}',search_text text NOT NULL,status text NOT NULL DEFAULT 'published' CHECK(status IN ('published','hidden')),created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX social_post_feed ON social_post(created_at DESC,id DESC);
+CREATE INDEX social_post_search ON social_post USING gin(to_tsvector('simple',search_text));
+CREATE TABLE post_media(post_id text NOT NULL REFERENCES social_post(id) ON DELETE CASCADE,media_id text NOT NULL REFERENCES media(id),position integer NOT NULL,PRIMARY KEY(post_id,media_id));
+CREATE TABLE post_product(post_id text NOT NULL REFERENCES social_post(id) ON DELETE CASCADE,product_id text NOT NULL REFERENCES product(id) ON DELETE CASCADE,PRIMARY KEY(post_id,product_id));
+CREATE TABLE user_follow(user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,target_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,PRIMARY KEY(user_id,target_id),CHECK(user_id<>target_id));
+CREATE TABLE user_block(user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,target_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,PRIMARY KEY(user_id,target_id),CHECK(user_id<>target_id));
+CREATE TABLE post_like(user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,post_id text NOT NULL REFERENCES social_post(id) ON DELETE CASCADE,PRIMARY KEY(user_id,post_id));
+CREATE TABLE post_save(user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,post_id text NOT NULL REFERENCES social_post(id) ON DELETE CASCADE,PRIMARY KEY(user_id,post_id));
+CREATE TABLE post_comment(id text PRIMARY KEY,post_id text NOT NULL REFERENCES social_post(id) ON DELETE CASCADE,author_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,text text NOT NULL,hidden boolean NOT NULL DEFAULT false,created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX post_comment_post ON post_comment(post_id,created_at);
