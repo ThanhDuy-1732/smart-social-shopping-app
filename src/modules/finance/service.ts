@@ -304,7 +304,7 @@ export async function prepareSettlement(
       await recognizeEligible(c, shopId, cutoff);
       const rows = (
         await c.query(
-          "SELECT o.* FROM shop_order o WHERE shop_id=$1 AND finance_eligible=true AND payout_status='none' AND created_at<=$2 AND NOT EXISTS(SELECT 1 FROM return_case r WHERE r.order_id=o.id AND r.status IN ('open','refund_pending')) ORDER BY o.id FOR UPDATE",
+          "SELECT o.* FROM shop_order o WHERE shop_id=$1 AND finance_eligible=true AND payout_status='none' AND created_at<=$2 AND received_at+make_interval(days=>greatest((policy_snapshot->>'returnDays')::int,(policy_snapshot->>'settlementHoldDays')::int))<$2::timestamptz AND NOT EXISTS(SELECT 1 FROM return_case r WHERE r.order_id=o.id AND r.status IN ('open','refund_pending')) ORDER BY o.id FOR UPDATE",
           [shopId, cutoff],
         )
       ).rows.filter(

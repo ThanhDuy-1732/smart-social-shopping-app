@@ -8,7 +8,7 @@ import { orderLabels, returnLabels } from "@/modules/orders/labels";
 import { DomainError } from "@/modules/shared/types";
 import { ActionForm } from "@/components/action-form";
 import { ReturnRequestForm } from "@/components/return-request-form";
-import { changeOrder, sendReview } from "../actions";
+import { changeOrder, sendReview, sendReturnReply } from "../actions";
 export default async function Order({
   params,
 }: {
@@ -252,6 +252,27 @@ export default async function Order({
                   </>
                 )}
               </p>
+              {c.sellerReply && (
+                <p className="notice">
+                  <strong>Shop phản hồi:</strong> {c.sellerReply}
+                </p>
+              )}
+              {owner && ["open", "refund_pending"].includes(c.status) && (
+                <ActionForm action={sendReturnReply} submitLabel="Gửi phản hồi">
+                  <input type="hidden" name="caseId" value={c.id} />
+                  <input type="hidden" name="orderId" value={order.id} />
+                  <label>
+                    Phản hồi của shop
+                    <textarea
+                      name="text"
+                      minLength={10}
+                      maxLength={2000}
+                      defaultValue={c.sellerReply ?? ""}
+                      required
+                    />
+                  </label>
+                </ActionForm>
+              )}
               {c.refundStatus === "pending" && (
                 <p className="notice">
                   Khoản hoàn đang chờ xử lý, chưa xác nhận đã trả tiền.

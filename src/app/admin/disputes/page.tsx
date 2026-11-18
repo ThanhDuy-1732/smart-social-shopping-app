@@ -37,6 +37,17 @@ export default async function Disputes() {
                 <td>
                   <strong>{c.shopName}</strong>
                   <p>{c.reason}</p>
+                  {c.sellerReply && (
+                    <p>
+                      <strong>Shop phản hồi:</strong> {c.sellerReply}
+                    </p>
+                  )}
+                  {c.kind === "cancellation" && (
+                    <p className="notice">
+                      Khoản hoàn bắt buộc sau hủy đơn; không được từ chối nghĩa
+                      vụ hoàn tiền.
+                    </p>
+                  )}
                   <div className="row">
                     {c.evidenceIds.map((id: string) => (
                       <a
@@ -69,38 +80,41 @@ export default async function Disputes() {
                   )}
                 </td>
                 <td>
-                  {c.status === "open" && (
-                    <ActionForm
-                      action={decideReturn}
-                      submitLabel="Lưu quyết định"
-                    >
-                      <input type="hidden" name="caseId" value={c.id} />
-                      <input type="hidden" name="orderId" value={c.orderId} />
-                      <label>
-                        Quyết định
-                        <select name="decision" aria-label="Quyết định">
-                          {allowed.includes("finance.manage") && (
-                            <option value="approve">Duyệt hoàn tiền</option>
-                          )}
-                          {allowed.includes("disputes.manage") && (
-                            <option value="reject">Không chấp thuận</option>
-                          )}
-                        </select>
-                      </label>
-                      <label>
-                        Số tiền hoàn (VND)
-                        <input
-                          name="amount"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                        />
-                      </label>
-                      <label>
-                        Lý do nếu không chấp thuận
-                        <textarea name="reason" maxLength={2000} />
-                      </label>
-                    </ActionForm>
-                  )}
+                  {c.status === "open" &&
+                    (allowed.includes("finance.manage") ||
+                      c.kind !== "cancellation") && (
+                      <ActionForm
+                        action={decideReturn}
+                        submitLabel="Lưu quyết định"
+                      >
+                        <input type="hidden" name="caseId" value={c.id} />
+                        <input type="hidden" name="orderId" value={c.orderId} />
+                        <label>
+                          Quyết định
+                          <select name="decision" aria-label="Quyết định">
+                            {allowed.includes("finance.manage") && (
+                              <option value="approve">Duyệt hoàn tiền</option>
+                            )}
+                            {allowed.includes("disputes.manage") &&
+                              c.kind !== "cancellation" && (
+                                <option value="reject">Không chấp thuận</option>
+                              )}
+                          </select>
+                        </label>
+                        <label>
+                          Số tiền hoàn (VND)
+                          <input
+                            name="amount"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                          />
+                        </label>
+                        <label>
+                          Lý do nếu không chấp thuận
+                          <textarea name="reason" maxLength={2000} />
+                        </label>
+                      </ActionForm>
+                    )}
                 </td>
               </tr>
             ))}

@@ -4,7 +4,7 @@
 - Phase 2 — danh mục/sản phẩm và media (Tasks 4–5): hoàn tất local; cloud media còn chờ.
 - Phase 3 — giỏ hàng, đơn, thanh toán và đối soát (Tasks 6–9): hoàn tất nghiệp vụ local; cổng thanh toán/hoàn tiền còn chờ.
 - Phase 4 — Social, kiểm duyệt, chat và gợi ý (Tasks 10–13): hoàn tất phạm vi local; AI thật còn chờ.
-- Phase 5 — PWA, báo cáo, vận hành và nghiệm thu (Tasks 14–16): đã triển khai local; đang rà soát cuối.
+- Phase 5 — PWA, báo cáo, vận hành và nghiệm thu (Tasks 14–16): hoàn tất triển khai và nghiệm thu local; production còn các điều kiện bên dưới.
 
 ## Bằng chứng
 
@@ -33,4 +33,7 @@ Phase 4 local: Social, kiểm duyệt, chat, gợi ý từ khóa và danh sách 
 PWA: manifest/icons, cài đặt khi trình duyệt hỗ trợ, trang offline, cập nhật có xác nhận và không tự ngắt checkout. Cache chỉ gồm trang offline và icons. E2E đổi tài khoản → truy cập chat cũ → offline đã pass; không hiện dữ liệu tài khoản trước. Push có API/worker và đăng ký gắn với phiên, tự hủy liên kết khi logout; chưa có VAPID/contact để thử gửi thật hoặc thiết bị Android/iOS để nghiệm thu.
 
 
-Mốc nghiệm thu local: 81 integration tests và 5 browser E2E pass, typecheck và production build pass. Backup/restore PostgreSQL vào database riêng đã pass. CI YAML được parse, workflow hosted chưa chạy vì chưa có remote/run. Báo cáo có CSV, phạm vi shop/quyền Admin, ranh giới ngày Việt Nam và nguồn đơn được xác minh; không ghi nguyên văn truy vấn tìm kiếm vào analytics. Các mức tải/chi phí production, provider thật và kiểm tra thiết bị vẫn theo launch-checklist.
+Mốc nghiệm thu local sau rà soát: 92 integration tests và 7 browser E2E pass, typecheck và production build pass. Backup/restore PostgreSQL vào database riêng đã pass. CI YAML được parse, workflow hosted chưa chạy vì chưa có remote/run. Báo cáo có CSV, phạm vi shop/quyền Admin, ranh giới ngày Việt Nam và nguồn đơn được xác minh; không ghi nguyên văn truy vấn tìm kiếm vào analytics. Các mức tải/chi phí production, provider thật và kiểm tra thiết bị vẫn theo launch-checklist.
+
+
+Rà soát độc lập đã phát hiện và sửa trong một lượt: tồn kho từ form cũ; giải phóng/khôi phục kho khi thanh toán lỗi/hủy đơn; không từ chối khoản hoàn bắt buộc; phân trang chat số; audit đọc bằng chứng chat; thời điểm đủ điều kiện đối soát; dữ liệu riêng trên trang công khai khi đổi tài khoản và khôi phục trang Admin sau thu hồi quyền. Hồi quy RED→GREEN và bộ kiểm tra đầy đủ đã qua. Tìm shop/lọc thuộc tính–còn hàng, ước tính giao hàng/bài liên quan, phản hồi đổi trả của shop và tỷ lệ hủy/hoàn có định nghĩa đã được bổ sung.

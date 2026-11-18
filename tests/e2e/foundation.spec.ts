@@ -47,7 +47,21 @@ async function register(page: Page, name: string) {
   await page.goto("/login");
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  const loginResponsePromise = page.waitForResponse((r) =>
+    r.url().endsWith("/sign-in/email"),
+  );
   await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  const loginResponse = await loginResponsePromise;
+  if (loginResponse.status() === 429) {
+    await new Promise((resolve) =>
+      setTimeout(
+        resolve,
+        (Number(loginResponse.headers()["x-retry-after"]) || 10) * 1000 + 100,
+      ),
+    );
+    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  }
+
   await expect(page).toHaveURL(/\/settings$/);
   return email;
 }

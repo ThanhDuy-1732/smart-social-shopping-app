@@ -32,7 +32,7 @@ Chưa triển khai production. Chưa có credentials thanh toán, AI hoặc medi
 
 ## Media local
 
-Chạy thêm `npm run worker` trong terminal thứ hai. Cần `ffmpeg` có trong PATH (hoặc đặt `FFMPEG_PATH`). Ảnh được decode/resize và chuyển WebP bằng sharp; MP4 được chuyển mã H.264/AAC tối đa 2 phút. Tệp gốc và dữ liệu thư/DB nằm trong `.local/`, không public trực tiếp. Chỉ tệp đã sẵn sàng và được đính vào sản phẩm công khai mới đọc được khi chưa đăng nhập; người tải lên xem được tệp riêng của mình.
+Chạy thêm `npm run worker` trong terminal thứ hai. Cần `ffmpeg` có trong PATH (hoặc đặt `FFMPEG_PATH`). Ảnh được decode/resize và chuyển WebP bằng sharp; MP4 được chuyển mã H.264/AAC tối đa 2 phút. Tệp gốc và dữ liệu thư/DB nằm trong `.local/`, không public trực tiếp. Tệp đã sẵn sàng gắn vào sản phẩm/bài viết/hồ sơ công khai có thể đọc khi chưa đăng nhập. Ảnh chat và bằng chứng riêng chỉ cấp cho đúng người tham gia hoặc nhân sự có quyền; lượt staff đọc bằng chứng có audit.
 
 Media local phục vụ phát triển một máy, bị chặn upload trong production. Cần dịch vụ media/kho bền vững và kiểm chứng tích hợp trước khi mở cho người dùng thật. Worker giữ job trong PostgreSQL, có lease và retry, không dựa vào bộ nhớ tiến trình.
 

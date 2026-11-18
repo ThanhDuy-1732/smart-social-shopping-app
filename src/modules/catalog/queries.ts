@@ -21,6 +21,8 @@ export type CatalogQuery = {
   maxPrice?: string;
   cursor?: string;
   limit?: number;
+  attributes?: Record<string, string | number>;
+  inStock?: boolean;
 };
 const querySchema = z.object({
   query: z.string().max(300).optional(),
@@ -36,6 +38,14 @@ const querySchema = z.object({
     .optional(),
   cursor: z.uuid().optional(),
   limit: z.number().int().min(1).max(50).default(24),
+  attributes: z
+    .record(
+      z.string().max(40),
+      z.union([z.string().max(500), z.number().finite()]),
+    )
+    .refine((v) => Object.keys(v).length <= 30)
+    .default({}),
+  inStock: z.boolean().default(false),
 });
 const columns =
   'p.id,p.name,p.shop_id AS "shopId",s.name AS "shopName",p.status,(SELECT pm.media_id FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=p.id AND m.status=\'ready\' AND m.kind=\'image\' ORDER BY pm.position LIMIT 1) AS "coverId",min(v.price)::text AS price,coalesce(sum(v.stock-v.reserved),0)::int AS stock';
@@ -65,6 +75,36 @@ export async function searchCatalog(
     );
   if (q.categoryId) where.push(`p.category_id=${bind(q.categoryId)}`);
   if (q.shopId) where.push(`p.shop_id=${bind(q.shopId)}`);
+  if (q.inStock) where.push("v.stock>v.reserved");
+  if (Object.keys(q.attributes).length) {
+    if (!q.categoryId)
+      throw new DomainError(
+        "INVALID_INPUT",
+        "Chọn ngành hàng trước khi lọc thuộc tính.",
+      );
+    const defs =
+      (
+        await db.query<{
+          attributes: { key: string; kind: string; options?: string[] }[];
+        }>("SELECT attributes FROM category WHERE id=$1", [q.categoryId])
+      ).rows[0]?.attributes ?? [];
+    for (const [key, value] of Object.entries(q.attributes)) {
+      const def = defs.find((d) => d.key === key);
+      if (
+        !def ||
+        (def.kind === "number"
+          ? typeof value !== "number"
+          : typeof value !== "string") ||
+        (def.kind === "select" && !def.options?.includes(String(value)))
+      )
+        throw new DomainError(
+          "INVALID_INPUT",
+          "Thuộc tính lọc không hợp lệ cho ngành hàng.",
+        );
+    }
+    where.push(`p.attributes @> ${bind(JSON.stringify(q.attributes))}::jsonb`);
+  }
+
   if (q.minPrice) where.push(`v.price>=${bind(q.minPrice)}::bigint`);
   if (q.maxPrice) where.push(`v.price<=${bind(q.maxPrice)}::bigint`);
   if (q.cursor) where.push(`p.id>${bind(q.cursor)}`);
@@ -96,6 +136,12 @@ export async function getPublicProduct(id: string) {
   if (!p) return null;
   return {
     ...p,
+    shippingRates: (
+      await db.query<{ region: string; fee: string; estimatedDays: number }>(
+        'SELECT region,fee::text,estimated_days AS "estimatedDays" FROM shipping_rate WHERE shop_id=$1 ORDER BY region',
+        [p.shopId],
+      )
+    ).rows,
     media: (
       await db.query<{ id: string; kind: "image" | "video" }>(
         "SELECT m.id,m.kind FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=$1 AND m.status='ready' ORDER BY pm.position",
@@ -174,6 +220,18 @@ export async function listProductsForReview(actor: Actor) {
       status: string;
     }>(
       "SELECT p.id,p.name,p.description,p.status,s.name AS \"shopName\" FROM product p JOIN shop s ON s.id=p.shop_id WHERE s.status='approved' ORDER BY p.updated_at DESC LIMIT 100",
+    )
+  ).rows;
+}
+
+export async function searchShops(query: string) {
+  if (query.trim().length < 2) return [];
+  if (query.length > 300)
+    throw new DomainError("INVALID_INPUT", "Từ khóa quá dài.");
+  return (
+    await db.query<{ id: string; name: string; description: string }>(
+      `SELECT s.id,s.name,s.description FROM shop s WHERE s.status='approved' AND strpos(lower(translate(regexp_replace(normalize(s.name,NFD),'[̀-ͯ]','','g'),'đĐ','dD')),$1)>0 ORDER BY s.name,s.id LIMIT 30`,
+      [normalizeSearch(query.trim())],
     )
   ).rows;
 }

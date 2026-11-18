@@ -1,3 +1,4 @@
+import { releaseHeldInventory } from "@/modules/checkout/service";
 import { notifyUser } from "@/modules/notifications/service";
 import { recordPaymentReceipt } from "@/modules/finance/service";
 import { z } from "zod";
@@ -94,6 +95,17 @@ export async function applyVerifiedPaymentEvent(input: unknown): Promise<void> {
     );
     if (payment.status === "paid") return;
     if (event.status === "failed") {
+      if (checkout.status === "awaiting_payment") {
+        await releaseHeldInventory(client, checkout.id);
+        await client.query(
+          "UPDATE checkout SET status='expired',cancel_reason='payment_failed' WHERE id=$1",
+          [checkout.id],
+        );
+        await client.query(
+          "UPDATE shop_order SET status='cancelled' WHERE checkout_id=$1 AND status='awaiting_payment'",
+          [checkout.id],
+        );
+      }
       await client.query(
         "UPDATE payment_intent SET status='failed' WHERE id=$1",
         [payment.id],

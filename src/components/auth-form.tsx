@@ -49,9 +49,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
         const result = await authClient.signIn.email({ email, password });
         if (result.error)
           throw new Error(
-            result.error.code === "EMAIL_NOT_VERIFIED"
-              ? "Vui lòng mở email xác minh tài khoản. Bạn có thể đăng nhập lại để nhận liên kết mới."
-              : "Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.",
+            result.error.status === 429
+              ? "Bạn đã thử nhiều lần. Vui lòng chờ một lát rồi thử lại."
+              : result.error.code === "EMAIL_NOT_VERIFIED"
+                ? "Vui lòng mở email xác minh tài khoản. Bạn có thể đăng nhập lại để nhận liên kết mới."
+                : "Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.",
           );
         if (!("twoFactorRedirect" in (result.data ?? {}))) {
           announceAuthChange();

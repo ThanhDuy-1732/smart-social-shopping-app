@@ -42,6 +42,7 @@ export const productSchema = z
             .regex(/^[1-9]\d{0,12}$/)
             .refine((x) => BigInt(x) <= 1000000000000n),
           stock: z.number().int().min(0).max(10000000),
+          originalStock: z.number().int().min(0).max(10000000).optional(),
         }),
       )
       .min(1)

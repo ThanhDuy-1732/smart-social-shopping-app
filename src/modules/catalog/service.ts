@@ -101,8 +101,8 @@ export async function saveProduct(
         ],
       );
       const existingVariants = (
-        await client.query<{ id: string; reserved: number }>(
-          "SELECT id,reserved FROM product_variant WHERE product_id=$1 ORDER BY id FOR UPDATE",
+        await client.query<{ id: string; reserved: number; stock: number }>(
+          "SELECT id,reserved,stock FROM product_variant WHERE product_id=$1 ORDER BY id FOR UPDATE",
           [id],
         )
       ).rows;
@@ -123,7 +123,21 @@ export async function saveProduct(
         if (variant.id && !existingVariants.some((x) => x.id === variant.id))
           throw new DomainError("FORBIDDEN", "Biến thể không thuộc sản phẩm.");
         const old = existingVariants.find((x) => x.id === variant.id);
-        if (old && variant.stock < old.reserved)
+        let stock = variant.stock;
+        if (old) {
+          if (variant.originalStock === undefined)
+            throw new DomainError(
+              "INVALID_INPUT",
+              "Tải lại trang sản phẩm để xác nhận tồn kho gốc.",
+            );
+          if (variant.stock === variant.originalStock) stock = old.stock;
+          else if (old.stock !== variant.originalStock)
+            throw new DomainError(
+              "CONFLICT",
+              "Tồn kho đã thay đổi. Tải lại trang trước khi điều chỉnh số lượng.",
+            );
+        }
+        if (old && stock < old.reserved)
           throw new DomainError(
             "CONFLICT",
             "Tồn kho không được nhỏ hơn số lượng đang giữ.",
@@ -137,7 +151,7 @@ export async function saveProduct(
             variant.sku,
             variant.label,
             variant.price,
-            variant.stock,
+            stock,
           ],
         );
       }

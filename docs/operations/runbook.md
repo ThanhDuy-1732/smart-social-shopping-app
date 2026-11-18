@@ -46,3 +46,12 @@ Các dịch vụ đọc quyền từ DB; staff phải có MFA. Kiểm duyệt ch
 `npm test`, `npm run typecheck`, `npm run build`, `npm run test:e2e`. E2E dùng port 14387 và DB `_test`, tách khỏi dữ liệu local. CI workflow đã được chuẩn bị tại `.github/workflows/checks.yml`; chưa có remote/run hosted để xác nhận CI xanh.
 
 Chưa có mức tải, RPO/RTO, dung lượng media hay ngân sách được chủ sản phẩm chốt. Không diễn giải kiểm thử đồng thời trong suite thành cam kết chịu tải production. Cần nghiệm thu theo cấu hình/nhà cung cấp thật sau khi chốt các mức này.
+
+
+## Mốc nghiệm thu sau rà soát
+
+92 integration tests và 7 browser E2E pass; typecheck/build pass. Rà soát độc lập và một lượt sửa đã có hồi quy cho tồn kho sau form cũ, thất bại thanh toán/đơn hủy, khoản hoàn bắt buộc, cutoff đối soát, chat nhiều trang, audit bằng chứng, tab công khai chứa lựa chọn riêng và trang Admin sau thu hồi quyền. Signed-in public pages cũng revalidate danh tính; Admin so sánh lại tập quyền trước khi hiện nội dung cũ.
+
+Tìm kiếm có tên shop, thuộc tính ngành và biến thể còn hàng. Trang sản phẩm có phí/ngày giao theo vùng và bài được gắn sản phẩm. Shop có thể phản hồi yêu cầu đang mở; phản hồi không tự thay đổi quyết định hoàn tiền. Tỷ lệ hủy/hoàn trong báo cáo là nhóm đơn theo ngày tạo/thanh toán, trạng thái tại lúc xem; không phải tỷ lệ tiền hoàn trên doanh số.
+
+Một số danh sách vận hành chỉ lấy 100 bản ghi; cần phân trang và tìm kiếm mở rộng khi vận hành khối lượng lớn. Không dùng giới hạn local này để suy ra năng lực production.

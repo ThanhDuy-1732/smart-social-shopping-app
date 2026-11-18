@@ -406,6 +406,27 @@ export async function createCheckout(
     return readCheckout(client, id);
   });
 }
+// Caller holds the checkout lock so expiry, payment failure and cancellation cannot release the same reservation twice.
+export async function releaseHeldInventory(
+  client: PoolClient,
+  checkoutId: string,
+): Promise<void> {
+  const rows = (
+    await client.query(
+      "SELECT variant_id,quantity FROM inventory_reservation WHERE checkout_id=$1 AND status='held' ORDER BY variant_id",
+      [checkoutId],
+    )
+  ).rows;
+  for (const row of rows)
+    await client.query(
+      "UPDATE product_variant SET reserved=reserved-$2 WHERE id=$1",
+      [row.variant_id, row.quantity],
+    );
+  await client.query(
+    "UPDATE inventory_reservation SET status='released' WHERE checkout_id=$1 AND status='held'",
+    [checkoutId],
+  );
+}
 export async function releaseExpiredReservations(): Promise<number> {
   const candidates = (
     await db.query(
@@ -420,21 +441,7 @@ export async function releaseExpiredReservations(): Promise<number> {
         [row.id],
       );
       if (!locked.rowCount) return;
-      const reservations = (
-        await client.query(
-          "SELECT variant_id,quantity FROM inventory_reservation WHERE checkout_id=$1 AND status='held' ORDER BY variant_id",
-          [row.id],
-        )
-      ).rows;
-      for (const r of reservations)
-        await client.query(
-          "UPDATE product_variant SET reserved=reserved-$2 WHERE id=$1",
-          [r.variant_id, r.quantity],
-        );
-      await client.query(
-        "UPDATE inventory_reservation SET status='released' WHERE checkout_id=$1 AND status='held'",
-        [row.id],
-      );
+      await releaseHeldInventory(client, row.id);
       await client.query(
         "UPDATE checkout SET status='expired',cancel_reason='timeout' WHERE id=$1",
         [row.id],

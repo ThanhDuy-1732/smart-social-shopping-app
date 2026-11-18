@@ -1,7 +1,7 @@
 import { optionalActor } from "@/server/optional-actor";
 import { ActivityView } from "@/components/activity-view";
 import Link from "next/link";
-import { searchCatalog } from "@/modules/catalog/queries";
+import { searchCatalog, searchShops } from "@/modules/catalog/queries";
 import { listCategories } from "@/modules/catalog/service";
 import { DomainError } from "@/modules/shared/types";
 import { ProductGrid } from "@/components/product-grid";
@@ -13,6 +13,16 @@ export default async function Search({
 }) {
   const q = await searchParams;
   const actor = await optionalActor();
+  const categories = await listCategories();
+  const selected = categories.find((c) => c.id === q.category);
+  const attributes: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(q))
+    if (key.startsWith("attr.") && value?.trim()) {
+      const attribute = key.slice(5),
+        def = selected?.attributes.find((d) => d.key === attribute);
+      attributes[attribute] = def?.kind === "number" ? Number(value) : value;
+    }
+  let shops: Awaited<ReturnType<typeof searchShops>> = [];
   let result, error;
   try {
     result = await searchCatalog({
@@ -21,12 +31,14 @@ export default async function Search({
       minPrice: q.min || undefined,
       maxPrice: q.max || undefined,
       cursor: q.cursor,
+      attributes,
+      inStock: q.inStock === "1",
     });
+    if (q.q) shops = await searchShops(q.q);
   } catch (e) {
     if (!(e instanceof DomainError)) throw e;
     error = e.message;
   }
-  const categories = await listCategories();
   const next = new URLSearchParams(
     Object.entries(q).filter((p): p is [string, string] => Boolean(p[1])),
   );
@@ -76,8 +88,60 @@ export default async function Search({
             />
           </label>
         </div>
+        <label>
+          <input
+            type="checkbox"
+            name="inStock"
+            value="1"
+            defaultChecked={q.inStock === "1"}
+          />{" "}
+          Chỉ hiện biến thể còn hàng
+        </label>
+        {selected?.attributes.map((def) => (
+          <label key={def.key}>
+            {def.label}
+            {def.kind === "select" ? (
+              <select
+                name={`attr.${def.key}`}
+                defaultValue={q[`attr.${def.key}`] ?? ""}
+              >
+                <option value="">Tất cả</option>
+                {def.options?.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                name={`attr.${def.key}`}
+                type={def.kind === "number" ? "number" : "text"}
+                step={def.kind === "number" ? "any" : undefined}
+                defaultValue={q[`attr.${def.key}`] ?? ""}
+                maxLength={500}
+              />
+            )}
+          </label>
+        ))}
+        <p className="hint">
+          Có thể nhập tên shop vào ô tìm kiếm. Chọn ngành hàng và tìm lại để mở
+          bộ lọc thuộc tính.
+        </p>
         <button>Tìm sản phẩm</button>
       </form>
+      {shops.length > 0 && (
+        <section className="section">
+          <h2>Gian hàng khớp tên</h2>
+          <div className="grid">
+            {shops.map((shop) => (
+              <article className="panel" key={shop.id}>
+                <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
+                <p>{shop.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="section">
         {error ? (
           <p role="alert" className="notice error">

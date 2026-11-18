@@ -1,6 +1,7 @@
+import { notifyUser } from "@/modules/notifications/service";
 import { recordConfirmedRefund } from "@/modules/finance/service";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
 import {
   assertActiveActor,
@@ -148,7 +149,10 @@ export async function approveRefund(
       ])
     ).rows[0];
     if (c.status !== "open")
-      throw new DomainError("CONFLICT", "Yêu cầu đã được xử lý.");
+      throw new DomainError(
+        "CONFLICT",
+        "Yêu cầu đã được xử lý hoặc là khoản hoàn bắt buộc sau hủy đơn.",
+      );
     if (order.payout_status !== "none")
       throw new DomainError(
         "CONFLICT",
@@ -309,11 +313,14 @@ export async function rejectReturn(
   await withTransaction(async (client) => {
     await lockShopFinance(client, ref.shop_id);
     const changed = await client.query(
-      "UPDATE return_case SET status='rejected',resolution=$2 WHERE id=$1 AND status='open' RETURNING id",
+      "UPDATE return_case SET status='rejected',resolution=$2 WHERE id=$1 AND status='open' AND kind='return' RETURNING id",
       [caseId, reason.trim()],
     );
     if (!changed.rowCount)
-      throw new DomainError("CONFLICT", "Yêu cầu đã được xử lý.");
+      throw new DomainError(
+        "CONFLICT",
+        "Yêu cầu đã được xử lý hoặc là khoản hoàn bắt buộc sau hủy đơn.",
+      );
     await client.query(
       "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'return.reject',$3,$4)",
       [
@@ -334,7 +341,52 @@ export async function listReturnCases(actor: Actor) {
     throw new DomainError("FORBIDDEN", "Bạn không có quyền xem yêu cầu xử lý.");
   return (
     await db.query(
-      'SELECT c.id,c.order_id AS "orderId",c.reason,c.status,c.requested_items_amount::text AS "requestedItemsAmount",c.requested_shipping_amount::text AS "requestedShippingAmount",s.name AS "shopName",r.amount::text AS "refundAmount",(SELECT coalesce(jsonb_agg(e.media_id),\'[]\') FROM return_evidence e WHERE e.case_id=c.id) AS "evidenceIds",r.status AS "refundStatus" FROM return_case c JOIN shop_order o ON o.id=c.order_id JOIN shop s ON s.id=o.shop_id LEFT JOIN refund r ON r.case_id=c.id ORDER BY c.created_at DESC LIMIT 100',
+      'SELECT c.id,c.kind,c.seller_reply AS "sellerReply",c.order_id AS "orderId",c.reason,c.status,c.requested_items_amount::text AS "requestedItemsAmount",c.requested_shipping_amount::text AS "requestedShippingAmount",s.name AS "shopName",r.amount::text AS "refundAmount",(SELECT coalesce(jsonb_agg(e.media_id),\'[]\') FROM return_evidence e WHERE e.case_id=c.id) AS "evidenceIds",r.status AS "refundStatus" FROM return_case c JOIN shop_order o ON o.id=c.order_id JOIN shop s ON s.id=o.shop_id LEFT JOIN refund r ON r.case_id=c.id ORDER BY c.created_at DESC LIMIT 100',
     )
   ).rows;
+}
+
+export async function replyToReturn(
+  actor: Actor,
+  caseId: string,
+  text: string,
+): Promise<void> {
+  await assertActiveActor(actor);
+  if (text.trim().length < 10 || text.length > 2000)
+    throw new DomainError("INVALID_INPUT", "Phản hồi cần 10–2000 ký tự.");
+  await withTransaction(async (c) => {
+    const row = (
+      await c.query(
+        "SELECT r.order_id,co.buyer_id FROM return_case r JOIN shop_order o ON o.id=r.order_id JOIN shop s ON s.id=o.shop_id JOIN checkout co ON co.id=o.checkout_id WHERE r.id=$1 AND s.owner_user_id=$2",
+        [caseId, actor.userId],
+      )
+    ).rows[0];
+    if (!row)
+      throw new DomainError(
+        "NOT_FOUND",
+        "Không tìm thấy yêu cầu của gian hàng.",
+      );
+    if (
+      !(
+        await c.query(
+          "UPDATE return_case SET seller_reply=$2,seller_replied_at=clock_timestamp() WHERE id=$1 AND status IN ('open','refund_pending') RETURNING id",
+          [caseId, text.trim()],
+        )
+      ).rowCount
+    )
+      throw new DomainError("CONFLICT", "Yêu cầu đã được xử lý.");
+    await c.query(
+      "INSERT INTO audit_event(id,actor_id,action,target_id) VALUES($1,$2,'return.reply',$3)",
+      [randomUUID(), actor.userId, caseId],
+    );
+    await notifyUser(
+      row.buyer_id,
+      {
+        eventKey: `return-reply:${caseId}:${createHash("sha256").update(text.trim()).digest("hex")}`,
+        title: "Shop đã phản hồi yêu cầu đổi trả",
+        href: `/orders/${row.order_id}`,
+      },
+      c,
+    );
+  });
 }

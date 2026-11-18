@@ -15,7 +15,7 @@ export async function GET(request: Request) {
         ? await getShopReport(actor, shop, range)
         : await getPlatformReport(actor, range);
     const rows = [
-      ["Chỉ tiêu", "VND hoặc số đơn"],
+      ["Chỉ tiêu", "Giá trị (VND / số đơn / %)"],
       ...Object.entries(report)
         .filter(([k]) => !["sources", "daily", "activity"].includes(k))
         .map(([k, v]) => [k, String(v)]),

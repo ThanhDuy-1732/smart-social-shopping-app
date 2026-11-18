@@ -199,10 +199,27 @@ export async function listReports(actor: Actor) {
   if (allowed.includes("shops.review")) visibleKinds.push("shop");
   if (!visibleKinds.length)
     throw new DomainError("FORBIDDEN", "Bạn không có quyền kiểm duyệt.");
-  return (
-    await db.query(
-      `SELECT r.id,r.kind,r.target_id AS "targetId",r.reason,r.status,r.resolution,u.name AS "reporterName",CASE r.kind WHEN 'message' THEN (SELECT text FROM chat_message WHERE id=r.target_id) WHEN 'post' THEN (SELECT p.text FROM social_post p WHERE p.id=r.target_id) WHEN 'product' THEN (SELECT p.name||': '||p.description FROM product p WHERE p.id=r.target_id) WHEN 'comment' THEN (SELECT c.text FROM post_comment c WHERE c.id=r.target_id) WHEN 'review' THEN (SELECT v.text FROM purchase_review v WHERE v.id=r.target_id) WHEN 'user' THEN (SELECT name FROM "user" WHERE id=r.target_id) WHEN 'shop' THEN (SELECT name FROM shop WHERE id=r.target_id) END AS preview,CASE r.kind WHEN 'message' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM chat_message cm JOIN media m ON m.id=cm.media_id WHERE cm.id=r.target_id AND m.status='ready') WHEN 'post' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM post_media pm JOIN media m ON m.id=pm.media_id WHERE pm.post_id=r.target_id AND m.status='ready') WHEN 'product' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=r.target_id AND m.status='ready') ELSE '[]'::jsonb END AS media FROM content_report r LEFT JOIN "user" u ON u.id=r.reporter_id WHERE r.kind=ANY($1::text[]) ORDER BY (r.status='open') DESC,r.created_at DESC LIMIT 100`,
-      [visibleKinds],
-    )
-  ).rows;
+  return withTransaction(async (c) => {
+    const rows = (
+      await c.query(
+        `SELECT r.id,r.kind,r.target_id AS "targetId",r.reason,r.status,r.resolution,u.name AS "reporterName",CASE r.kind WHEN 'message' THEN (SELECT text FROM chat_message WHERE id=r.target_id) WHEN 'post' THEN (SELECT p.text FROM social_post p WHERE p.id=r.target_id) WHEN 'product' THEN (SELECT p.name||': '||p.description FROM product p WHERE p.id=r.target_id) WHEN 'comment' THEN (SELECT c.text FROM post_comment c WHERE c.id=r.target_id) WHEN 'review' THEN (SELECT v.text FROM purchase_review v WHERE v.id=r.target_id) WHEN 'user' THEN (SELECT name FROM "user" WHERE id=r.target_id) WHEN 'shop' THEN (SELECT name FROM shop WHERE id=r.target_id) END AS preview,CASE r.kind WHEN 'message' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM chat_message cm JOIN media m ON m.id=cm.media_id WHERE cm.id=r.target_id AND m.status='ready') WHEN 'post' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM post_media pm JOIN media m ON m.id=pm.media_id WHERE pm.post_id=r.target_id AND m.status='ready') WHEN 'product' THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind)),'[]') FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=r.target_id AND m.status='ready') ELSE '[]'::jsonb END AS media FROM content_report r LEFT JOIN "user" u ON u.id=r.reporter_id WHERE r.kind=ANY($1::text[]) ORDER BY (r.status='open') DESC,r.created_at DESC LIMIT 100`,
+        [visibleKinds],
+      )
+    ).rows;
+    for (const row of rows)
+      if (row.kind === "message" && row.preview !== null)
+        await c.query(
+          "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'evidence.read',$3,$4)",
+          [
+            randomUUID(),
+            actor.userId,
+            row.targetId,
+            JSON.stringify({
+              scope: "reported-message-preview",
+              reportId: row.id,
+            }),
+          ],
+        );
+    return rows;
+  });
 }

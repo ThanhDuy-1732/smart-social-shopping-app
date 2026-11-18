@@ -36,6 +36,11 @@ export type FinancialReport = {
   paidGmv: string;
   paidShipping: string;
   paidOrders: number;
+  createdOrders: number;
+  cancelledOrders: number;
+  refundedOrders: number;
+  cancellationRate: number;
+  refundRate: number;
   receipts: string;
   refunds: string;
   payouts: string;
@@ -63,7 +68,13 @@ async function report(
     const params = [start, end, shopId];
     const orders = (
       await c.query(
-        `SELECT coalesce(sum(o.subtotal),0)::text AS "paidGmv",coalesce(sum(o.shipping),0)::text AS "paidShipping",count(*)::int AS "paidOrders" FROM shop_order o WHERE ${scope} AND o.paid_at>=$1 AND o.paid_at<$2`,
+        `SELECT coalesce(sum(o.subtotal),0)::text AS "paidGmv",coalesce(sum(o.shipping),0)::text AS "paidShipping",count(*)::int AS "paidOrders",count(*) FILTER(WHERE o.refunded_amount>0)::int AS "refundedOrders" FROM shop_order o WHERE ${scope} AND o.paid_at>=$1 AND o.paid_at<$2`,
+        params,
+      )
+    ).rows[0];
+    const cohort = (
+      await c.query(
+        `SELECT count(*)::int AS "createdOrders",count(*) FILTER(WHERE status='cancelled')::int AS "cancelledOrders" FROM shop_order o WHERE ${scope} AND created_at>=$1 AND created_at<$2`,
         params,
       )
     ).rows[0];
@@ -99,7 +110,22 @@ async function report(
             [start, end],
           )
         ).rows[0];
-    return { ...orders, ...financial, payable, sources, daily, activity };
+    return {
+      ...orders,
+      ...financial,
+      ...cohort,
+      cancellationRate: cohort.createdOrders
+        ? Math.round((cohort.cancelledOrders * 10000) / cohort.createdOrders) /
+          100
+        : 0,
+      refundRate: orders.paidOrders
+        ? Math.round((orders.refundedOrders * 10000) / orders.paidOrders) / 100
+        : 0,
+      payable,
+      sources,
+      daily,
+      activity,
+    };
   });
 }
 export async function getPlatformReport(actor: Actor, range: DateRange) {

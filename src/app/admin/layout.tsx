@@ -14,7 +14,11 @@ export default async function AdminLayout({
     allowed.includes(item.permission),
   );
   return (
-    <PrivateSession key={actor.userId} userId={actor.userId}>
+    <PrivateSession
+      key={actor.userId}
+      userId={actor.userId}
+      permissions={allowed}
+    >
       <nav className="subnav" aria-label="Quản trị">
         <Link href="/admin">Tổng quan</Link>
         {items

@@ -49,6 +49,21 @@ export function ReportView({
         trả/chờ đối soát; tiền thu, hoàn và chi trả lấy từ sổ bút toán. Số phải
         trả là số dư cộng dồn đến cuối ngày kết thúc, gồm tiền còn giữ.
       </p>
+      <section className="panel section">
+        <h2>Tỷ lệ theo nhóm đơn</h2>
+        <p>
+          Hủy: {report.cancellationRate.toLocaleString("vi-VN")}% (
+          {report.cancelledOrders}/{report.createdOrders} đơn tạo trong kỳ).
+          Hoàn: {report.refundRate.toLocaleString("vi-VN")}% (
+          {report.refundedOrders}/{report.paidOrders} đơn thanh toán trong kỳ).
+        </p>
+        <p className="hint">
+          Nhóm tạo đơn gồm cả đơn chưa thanh toán; nhóm hoàn chỉ tính đơn đã có
+          khoản hoàn được xác nhận. Trạng thái tính tại lúc xem, kể cả xử lý sau
+          kỳ; không phải tỷ lệ tiền hoàn trên doanh số. Mẫu số bằng 0 hiển thị
+          0%.
+        </p>
+      </section>
       <h2>Nguồn gần nhất trước khi tạo đơn</h2>
       <p className="muted">
         Chỉ ghi nguồn bài viết/gợi ý hợp lệ trong 7 ngày, có liên kết sản phẩm

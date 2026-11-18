@@ -19,7 +19,11 @@ export default async function Notifications() {
         items.map((n) => (
           <article className="card" key={n.id}>
             <Link href={n.href}>{n.title}</Link>
-            <p className="hint">{n.createdAt.toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh"})}</p>
+            <p className="hint">
+              {n.createdAt.toLocaleString("vi-VN", {
+                timeZone: "Asia/Ho_Chi_Minh",
+              })}
+            </p>
             {!n.readAt && (
               <form action={read}>
                 <input type="hidden" name="id" value={n.id} />

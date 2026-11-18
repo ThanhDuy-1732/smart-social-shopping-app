@@ -35,6 +35,7 @@ export async function listFeed(
       mode: z.enum(["explore", "following", "saved"]).default("explore"),
       query: z.string().max(300).optional(),
       authorId: z.uuid().optional(),
+      productId: z.uuid().optional(),
       limit: z.number().int().min(1).max(50).default(20),
       cursor: z.string().max(512).optional(),
     })
@@ -62,6 +63,10 @@ export async function listFeed(
       "EXISTS(SELECT 1 FROM post_save s WHERE s.user_id=$1 AND s.post_id=p.id)",
     );
   if (q.authorId) where.push(`p.author_id=${bind(q.authorId)}`);
+  if (q.productId)
+    where.push(
+      `EXISTS(SELECT 1 FROM post_product linked WHERE linked.post_id=p.id AND linked.product_id=${bind(q.productId)})`,
+    );
   if (q.query?.trim())
     where.push(
       `to_tsvector('simple',p.search_text) @@ plainto_tsquery('simple',${bind(normalizeSearch(q.query))})`,

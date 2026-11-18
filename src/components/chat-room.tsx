@@ -154,7 +154,9 @@ export function ChatRoom({
                     <p>{m.reference.label}</p>
                   ))}
                 <p className="hint">
-                  {new Date(m.createdAt).toLocaleString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh"})}
+                  {new Date(m.createdAt).toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}
                   {m.senderId === userId &&
                   BigInt(m.position) <= BigInt(room.peerRead)
                     ? " · Đã đọc"

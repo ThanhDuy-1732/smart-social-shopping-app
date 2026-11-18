@@ -10,6 +10,7 @@ type Variant = {
   label: string;
   price: string;
   stock: number;
+  originalStock?: number;
 };
 type EditableProduct = {
   id: string;
@@ -35,7 +36,9 @@ export function ProductEditor({
     product?.categoryId ?? categories[0]?.id ?? "",
   );
   const [variants, setVariants] = useState<Variant[]>(
-    product?.variants ?? [{ sku: "", label: "", price: "", stock: 0 }],
+    product?.variants.map((v) => ({ ...v, originalStock: v.stock })) ?? [
+      { sku: "", label: "", price: "", stock: 0 },
+    ],
   );
   const category = categories.find((x) => x.id === categoryId);
   function update(index: number, key: keyof Variant, value: string) {

@@ -1,3 +1,5 @@
+import { listFeed } from "@/modules/social/queries";
+import { PostCard } from "@/components/post-card";
 import { ActivityView } from "@/components/activity-view";
 import { listLists } from "@/modules/discovery/service";
 import { saveProductToList } from "@/app/(account)/lists/actions";
@@ -20,6 +22,7 @@ export default async function Product({
   const actor = await optionalActor();
   const lists = actor ? await listLists(actor) : [];
   const reviews = await getPublicReviews(product.id);
+  const related = await listFeed(actor, { productId: product.id, limit: 6 });
   return (
     <>
       <p>
@@ -82,6 +85,27 @@ export default async function Product({
             </ActionForm>
           </details>
         )}
+        <h2>Giao hàng dự kiến</h2>
+        {product.shippingRates.length ? (
+          <ul>
+            {product.shippingRates.map((rate) => (
+              <li key={rate.region}>
+                {rate.region === "*" ? "Toàn quốc" : rate.region}:{" "}
+                {BigInt(rate.fee).toLocaleString("vi-VN")} ₫ · khoảng{" "}
+                {rate.estimatedDays} ngày
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>
+            Shop chưa khai báo phí giao hàng. Kiểm tra khu vực và tổng tiền tại
+            bước đặt hàng.
+          </p>
+        )}
+        <p className="hint">
+          Shop tự giao hàng. Phí và thời gian phụ thuộc khu vực; tổng tiền được
+          xác nhận trước khi tạo đơn.
+        </p>
         <h2>Thông tin sản phẩm</h2>
         <dl>
           {Object.entries(product.attributes).map(([key, value]) => (
@@ -147,6 +171,16 @@ export default async function Product({
           ))
         ) : (
           <p className="muted">Chưa có đánh giá từ giao dịch đã nhận hàng.</p>
+        )}
+      </section>
+      <section className="section">
+        <h2>Trải nghiệm có gắn sản phẩm này</h2>
+        {related.items.length ? (
+          related.items.map((post) => (
+            <PostCard key={post.id} post={post} signedIn={Boolean(actor)} />
+          ))
+        ) : (
+          <p>Chưa có bài chia sẻ liên quan đang hiển thị.</p>
         )}
       </section>
     </>

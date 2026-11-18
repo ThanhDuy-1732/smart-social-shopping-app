@@ -3,13 +3,20 @@ import { useEffect, useRef, useState } from "react";
 export function PrivateSession({
   userId,
   children,
+  permissions,
+  publicPage = false,
 }: {
   userId: string;
   children: React.ReactNode;
+  permissions?: string[];
+  publicPage?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null),
     [valid, setValid] = useState(false),
     [error, setError] = useState(false);
+  const permissionKey = permissions
+    ? [...permissions].sort().join("|")
+    : undefined;
   useEffect(() => {
     let generation = 0,
       alive = true;
@@ -32,10 +39,15 @@ export function PrivateSession({
         if (!alive || current !== generation) return;
         if (!response.ok) {
           invalidate();
-          window.location.replace("/login");
+          if (publicPage) window.location.reload();
+          else window.location.replace("/login");
           return;
         }
-        if (actor.userId !== userId) {
+        if (
+          actor.userId !== userId ||
+          (permissionKey !== undefined &&
+            [...(actor.permissions ?? [])].sort().join("|") !== permissionKey)
+        ) {
           invalidate();
           window.location.reload();
           return;
@@ -78,7 +90,7 @@ export function PrivateSession({
       window.removeEventListener("minhdung-auth-change", authChanged);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [userId]);
+  }, [userId, permissionKey, publicPage]);
   return (
     <>
       {!valid && (

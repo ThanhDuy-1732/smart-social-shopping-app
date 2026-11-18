@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { requireActor } from "@/modules/access/service";
 import { transitionOrder } from "@/modules/orders/service";
-import { requestReturn } from "@/modules/returns/service";
+import { requestReturn, replyToReturn } from "@/modules/returns/service";
 import { submitReview } from "@/modules/reviews/service";
 import { actionError } from "@/server/action-error";
 import { DomainError } from "@/modules/shared/types";
@@ -83,5 +83,23 @@ export async function sendReview(
     return { success: "Đã đăng đánh giá từ giao dịch của bạn." };
   } catch (error) {
     return actionError(error);
+  }
+}
+
+export async function sendReturnReply(
+  _state: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  try {
+    await replyToReturn(
+      await requireActor(await headers()),
+      String(data.get("caseId")),
+      String(data.get("text")),
+    );
+    revalidatePath(`/orders/${data.get("orderId")}`);
+    revalidatePath("/admin/disputes");
+    return { success: "Đã gửi phản hồi cho người mua." };
+  } catch (e) {
+    return actionError(e);
   }
 }

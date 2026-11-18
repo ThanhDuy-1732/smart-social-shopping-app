@@ -242,7 +242,7 @@ export async function listMessages(
       createdAt: Date;
       hidden: boolean;
     }>(
-      'SELECT id,sender_id AS "senderId",position::text,text,media_id AS "mediaId",reference,created_at AS "createdAt",hidden FROM chat_message WHERE conversation_id=$1 AND ($2::bigint IS NULL OR position<$2::bigint) ORDER BY position DESC LIMIT 51',
+      'SELECT id,sender_id AS "senderId",position::text,text,media_id AS "mediaId",reference,created_at AS "createdAt",hidden FROM chat_message WHERE conversation_id=$1 AND ($2::bigint IS NULL OR position<$2::bigint) ORDER BY chat_message.position DESC LIMIT 51',
       [conversationId, cursor ?? null],
     )
   ).rows;

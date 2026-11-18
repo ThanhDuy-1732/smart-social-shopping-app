@@ -6,7 +6,7 @@ import { assertActiveActor, requirePermission } from "@/modules/access/service";
 import { getReadyMedia } from "@/modules/media/service";
 import { lockShopFinance } from "@/modules/finance/lock";
 import { DomainError, type Actor } from "@/modules/shared/types";
-import type { Address } from "@/modules/checkout/service";
+import { releaseHeldInventory, type Address } from "@/modules/checkout/service";
 import type { TradingPolicy } from "@/modules/policies/service";
 const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("accept") }),
@@ -62,6 +62,7 @@ export type OrderDetail = {
     refundAmount: string | null;
     refundStatus: string | null;
     evidenceIds: string[];
+    sellerReply: string | null;
   }[];
 };
 export async function getOrder(actor: Actor, id: string): Promise<OrderDetail> {
@@ -90,7 +91,7 @@ export async function getOrder(actor: Actor, id: string): Promise<OrderDetail> {
   ).rows;
   const cases = (
     await db.query<OrderDetail["cases"][number]>(
-      'SELECT c.id,c.reason,c.status,c.requested_items_amount::text AS "requestedItemsAmount",c.requested_shipping_amount::text AS "requestedShippingAmount",r.amount::text AS "refundAmount",(SELECT coalesce(jsonb_agg(e.media_id),\'[]\') FROM return_evidence e WHERE e.case_id=c.id) AS "evidenceIds",r.status AS "refundStatus" FROM return_case c LEFT JOIN refund r ON r.case_id=c.id WHERE c.order_id=$1 ORDER BY c.created_at DESC',
+      'SELECT c.id,c.reason,c.status,c.seller_reply AS "sellerReply",c.requested_items_amount::text AS "requestedItemsAmount",c.requested_shipping_amount::text AS "requestedShippingAmount",r.amount::text AS "refundAmount",(SELECT coalesce(jsonb_agg(e.media_id),\'[]\') FROM return_evidence e WHERE e.case_id=c.id) AS "evidenceIds",r.status AS "refundStatus" FROM return_case c LEFT JOIN refund r ON r.case_id=c.id WHERE c.order_id=$1 ORDER BY c.created_at DESC',
       [id],
     )
   ).rows;
@@ -202,21 +203,7 @@ export async function transitionOrder(
             "CONFLICT",
             "Thanh toán đã đổi trạng thái. Vui lòng tải lại đơn.",
           );
-        const reservations = (
-          await client.query(
-            "SELECT variant_id,quantity FROM inventory_reservation WHERE checkout_id=$1 AND status='held' ORDER BY variant_id",
-            [detail.checkoutId],
-          )
-        ).rows;
-        for (const r of reservations)
-          await client.query(
-            "UPDATE product_variant SET reserved=reserved-$2 WHERE id=$1",
-            [r.variant_id, r.quantity],
-          );
-        await client.query(
-          "UPDATE inventory_reservation SET status='released' WHERE checkout_id=$1 AND status='held'",
-          [detail.checkoutId],
-        );
+        await releaseHeldInventory(client, detail.checkoutId);
         await client.query(
           "UPDATE checkout SET status='expired',cancel_reason='buyer' WHERE id=$1",
           [detail.checkoutId],
@@ -258,6 +245,17 @@ export async function transitionOrder(
             ).toString(),
           ],
         );
+        const returned = (
+          await client.query(
+            "SELECT variant_id,quantity FROM order_item WHERE order_id=$1 ORDER BY variant_id",
+            [id],
+          )
+        ).rows;
+        for (const item of returned)
+          await client.query(
+            "UPDATE product_variant SET stock=stock+$2 WHERE id=$1",
+            [item.variant_id, item.quantity],
+          );
         await client.query(
           "UPDATE shop_order SET status='cancelled' WHERE id=$1",
           [id],

@@ -1,10 +1,14 @@
-import { requireActor } from "@/modules/access/service";
+import { requireActor, getAllowedPermissions } from "@/modules/access/service";
 import { apiError } from "@/server/http";
 export async function GET(request: Request) {
   try {
-    return Response.json(await requireActor(request.headers), {
-      headers: { "Cache-Control": "private, no-store" },
-    });
+    const actor = await requireActor(request.headers);
+    return Response.json(
+      { ...actor, permissions: await getAllowedPermissions(actor) },
+      {
+        headers: { "Cache-Control": "private, no-store" },
+      },
+    );
   } catch (e) {
     return apiError(e);
   }
