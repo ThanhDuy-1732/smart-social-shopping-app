@@ -37,6 +37,7 @@ export async function notifyUser(
     await enqueueJob("email.send", id, { id }, client);
   }
 }
+// shortcut: The notification inbox returns the latest 100 items; add paging for longer histories.
 export async function listNotifications(actor: Actor) {
   await assertActiveActor(actor);
   return (

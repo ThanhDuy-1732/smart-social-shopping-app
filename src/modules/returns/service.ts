@@ -332,6 +332,7 @@ export async function rejectReturn(
     );
   });
 }
+// shortcut: The operational case list returns at most 100 rows; add paging and case search for larger queues.
 export async function listReturnCases(actor: Actor) {
   const allowed = await getAllowedPermissions(actor);
   if (

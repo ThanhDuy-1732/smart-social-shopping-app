@@ -100,6 +100,7 @@ export async function suspendUser(
     setUserSuspension(client, actor, userId, suspended),
   );
 }
+// shortcut: Admin user lists return at most 100 rows; add server pagination before larger operations.
 export async function listUsers(actor: Actor) {
   await requirePermission(actor, "users.manage");
   return (

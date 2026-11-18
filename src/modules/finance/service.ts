@@ -592,6 +592,7 @@ export async function listFinanceShops(actor: Actor) {
     )
   ).rows as { id: string; name: string }[];
 }
+// shortcut: Settlement history returns at most 100 batches; add paging for longer histories.
 export async function listSettlements(actor: Actor, shopId?: string) {
   if (shopId) await allowShopRead(actor, shopId);
   else await requirePermission(actor, "finance.manage");

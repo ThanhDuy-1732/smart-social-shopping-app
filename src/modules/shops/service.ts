@@ -118,6 +118,7 @@ export async function requireApprovedShop(
       "Gian hàng chưa được duyệt hoặc không thuộc tài khoản của bạn.",
     );
 }
+// shortcut: Admin shop review returns at most 100 rows; add server pagination for larger queues.
 export async function listShopApplications(
   actor: Actor,
 ): Promise<ShopReview[]> {

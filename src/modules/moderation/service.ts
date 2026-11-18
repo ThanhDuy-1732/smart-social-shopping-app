@@ -190,6 +190,7 @@ export async function moderate(
     );
   });
 }
+// shortcut: The moderation queue returns at most 100 reports; add paging and search for larger queues.
 export async function listReports(actor: Actor) {
   const allowed = await getAllowedPermissions(actor);
   const visibleKinds: string[] = [];

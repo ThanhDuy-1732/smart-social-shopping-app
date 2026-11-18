@@ -245,6 +245,7 @@ export async function getList(actor: Actor, id: string) {
     ),
   };
 }
+// shortcut: The list index returns the latest 100 lists; add paging for longer histories.
 export async function listLists(actor: Actor) {
   await assertActiveActor(actor);
   return (

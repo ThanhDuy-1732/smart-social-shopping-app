@@ -209,6 +209,7 @@ export async function getOwnProduct(actor: Actor, id: string) {
     ).rows,
   };
 }
+// shortcut: Admin product review returns at most 100 rows; add server pagination for larger queues.
 export async function listProductsForReview(actor: Actor) {
   await requirePermission(actor, "content.moderate");
   return (
@@ -224,6 +225,7 @@ export async function listProductsForReview(actor: Actor) {
   ).rows;
 }
 
+// shortcut: Shop name search returns the first 30 matches; add cursor paging as the directory grows.
 export async function searchShops(query: string) {
   if (query.trim().length < 2) return [];
   if (query.length > 300)
