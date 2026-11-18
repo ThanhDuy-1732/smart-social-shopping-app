@@ -114,3 +114,9 @@ test("invalid bank details and forged phone are rejected before writing", async 
   ).rejects.toMatchObject({ code: "INVALID_INPUT" });
   expect(await getOwnShop(other)).toBeNull();
 });
+
+test('the platform admin can approve the platform shop they operate',async()=>{
+ const ownId=await applyForShop(admin,{...input,name:'Gian hàng của nền tảng'});
+ await reviewShop(admin,ownId,'approve','Đã xác minh gian hàng do nền tảng vận hành');
+ await requireApprovedShop(admin,ownId);
+});

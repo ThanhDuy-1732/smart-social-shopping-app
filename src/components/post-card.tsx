@@ -1,3 +1,4 @@
+import { ReportForm } from "./report-form";
 import Link from "next/link";
 import type { PostCard as Post } from "@/modules/social/queries";
 import { ActionForm } from "./action-form";
@@ -102,6 +103,7 @@ export function PostCard({
         )}
         <Link href={`/posts/${post.id}`}>Bình luận ({post.commentCount})</Link>
       </div>
+      {signedIn && <ReportForm kind="post" targetId={post.id} />}
     </article>
   );
 }

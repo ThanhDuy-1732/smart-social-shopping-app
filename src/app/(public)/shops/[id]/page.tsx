@@ -1,3 +1,5 @@
+import { optionalActor } from "@/server/optional-actor";
+import { ReportForm } from "@/components/report-form";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db";
 import { searchCatalog } from "@/modules/catalog/queries";
@@ -8,6 +10,7 @@ export default async function Shop({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const actor = await optionalActor();
   const { id } = await params;
   const shop = (
     await db.query(
@@ -25,6 +28,7 @@ export default async function Shop({
           <p className="muted">{shop.description}</p>
         </div>
       </div>
+      {actor && <ReportForm kind="shop" targetId={shop.id} />}
       {result.items.length ? (
         <ProductGrid items={result.items} />
       ) : (

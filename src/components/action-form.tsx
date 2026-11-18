@@ -1,5 +1,5 @@
 "use client";
-import { useActionState,startTransition } from "react";
+import { useActionState, startTransition } from "react";
 export type ActionState = { error?: string; success?: string };
 export function ActionForm({
   action,
@@ -14,7 +14,15 @@ export function ActionForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
-    <form action={formAction} className="form" onSubmit={event=>{event.preventDefault();const data=new FormData(event.currentTarget);startTransition(()=>formAction(data));}}>
+    <form
+      action={formAction}
+      className="form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+    >
       <fieldset
         disabled={pending}
         style={{

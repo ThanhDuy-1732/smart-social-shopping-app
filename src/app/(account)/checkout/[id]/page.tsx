@@ -1,6 +1,59 @@
-import Link from 'next/link';
-import { pageActor } from '@/server/page-access';
-import { getCheckout } from '@/modules/checkout/service';
-import { DomainError } from '@/modules/shared/types';
-import { notFound } from 'next/navigation';
-export default async function CheckoutDetail({params}:{params:Promise<{id:string}>}){const actor=await pageActor();let checkout;try{checkout=await getCheckout(actor,(await params).id);}catch(error){if(error instanceof DomainError&&error.code==='NOT_FOUND')notFound();throw error;}return <><h1>Đơn hàng của bạn</h1><div className="panel"><p className="muted">Mã đơn: {checkout.id}</p><p className="metric">{BigInt(checkout.total).toLocaleString('vi-VN')} ₫</p><p>Trạng thái: {{awaiting_payment:'Chờ thanh toán',paid:'Đã thanh toán',expired:'Đã hết thời gian giữ hàng',refund_required:'Đang xử lý khoản thanh toán'}[checkout.status]??checkout.status}</p>{checkout.status==='awaiting_payment'&&<p className="notice">Thanh toán trực tuyến chưa được mở. Đơn này chưa được thanh toán; hàng chỉ được giữ đến {new Date(checkout.expiresAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})}.</p>}<p>Đơn được tách thành {checkout.orders.length} phần để từng shop xử lý giao hàng.</p><Link className="button secondary" href="/orders">Xem các phần đơn</Link><Link className="button secondary" href="/cart">Về giỏ hàng</Link></div></>;}
+import Link from "next/link";
+import { pageActor } from "@/server/page-access";
+import { getCheckout } from "@/modules/checkout/service";
+import { DomainError } from "@/modules/shared/types";
+import { notFound } from "next/navigation";
+export default async function CheckoutDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const actor = await pageActor();
+  let checkout;
+  try {
+    checkout = await getCheckout(actor, (await params).id);
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "NOT_FOUND") notFound();
+    throw error;
+  }
+  return (
+    <>
+      <h1>Đơn hàng của bạn</h1>
+      <div className="panel">
+        <p className="muted">Mã đơn: {checkout.id}</p>
+        <p className="metric">
+          {BigInt(checkout.total).toLocaleString("vi-VN")} ₫
+        </p>
+        <p>
+          Trạng thái:{" "}
+          {{
+            awaiting_payment: "Chờ thanh toán",
+            paid: "Đã thanh toán",
+            expired: "Đã hết thời gian giữ hàng",
+            refund_required: "Đang xử lý khoản thanh toán",
+          }[checkout.status] ?? checkout.status}
+        </p>
+        {checkout.status === "awaiting_payment" && (
+          <p className="notice">
+            Thanh toán trực tuyến chưa được mở. Đơn này chưa được thanh toán;
+            hàng chỉ được giữ đến{" "}
+            {new Date(checkout.expiresAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+            .
+          </p>
+        )}
+        <p>
+          Đơn được tách thành {checkout.orders.length} phần để từng shop xử lý
+          giao hàng.
+        </p>
+        <Link className="button secondary" href="/orders">
+          Xem các phần đơn
+        </Link>
+        <Link className="button secondary" href="/cart">
+          Về giỏ hàng
+        </Link>
+      </div>
+    </>
+  );
+}

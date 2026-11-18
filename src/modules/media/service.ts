@@ -156,11 +156,15 @@ export async function readMedia(
       (x) => x.buyerId === actor.userId || x.ownerId === actor.userId,
     );
     if (!allowed) {
-      const productAttached = Boolean(
-        (await db.query("SELECT 1 FROM product_media WHERE media_id=$1", [id]))
-          .rowCount,
+      const contentAttached = Boolean(
+        (
+          await db.query(
+            "SELECT 1 FROM product_media WHERE media_id=$1 UNION ALL SELECT 1 FROM post_media WHERE media_id=$1",
+            [id],
+          )
+        ).rowCount,
       );
-      if (attached.length || productAttached) {
+      if (attached.length || contentAttached) {
         const permissions = await getAllowedPermissions(actor);
         allowed = attached.length
           ? permissions.includes("disputes.manage") ||
@@ -174,7 +178,7 @@ export async function readMedia(
               actor.userId,
               id,
               JSON.stringify({
-                scope: attached.length ? "order" : "product-review",
+                scope: attached.length ? "order" : "content-review",
               }),
             ],
           );
@@ -251,6 +255,7 @@ async function processMedia(id: string): Promise<void> {
       const source = await readFile(`${dir}/source`);
       if (source.subarray(4, 8).toString() !== "ftyp")
         throw new Error("Unsupported video");
+      // shortcut: local videos are capped at 120 seconds; use managed transcoding before supporting longer public uploads.
       await promisify(execFile)(
         process.env.FFMPEG_PATH ?? "ffmpeg",
         [

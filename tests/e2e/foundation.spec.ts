@@ -65,11 +65,19 @@ test("registered seller submits application and an MFA admin reviews it", async 
     ["Tên chủ tài khoản", "NGUYEN VAN THU"],
   ])
     await page.getByLabel(label, { exact: true }).fill(value);
-  await page.getByLabel('Số điện thoại Việt Nam',{exact:true}).fill('123');
-  await page.getByRole('button',{name:'Gửi hồ sơ xét duyệt',exact:true}).click();
-  await expect(page.getByRole('alert').filter({hasText:'Kiểm tra tên shop'})).toBeVisible();
-  await expect(page.getByLabel('Tên gian hàng',{exact:true})).toHaveValue('Shop thử E2E');
-  await page.getByLabel('Số điện thoại Việt Nam',{exact:true}).fill('0901234567');
+  await page.getByLabel("Số điện thoại Việt Nam", { exact: true }).fill("123");
+  await page
+    .getByRole("button", { name: "Gửi hồ sơ xét duyệt", exact: true })
+    .click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Kiểm tra tên shop" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Tên gian hàng", { exact: true })).toHaveValue(
+    "Shop thử E2E",
+  );
+  await page
+    .getByLabel("Số điện thoại Việt Nam", { exact: true })
+    .fill("0901234567");
   await page.getByRole("button", { name: "Gửi hồ sơ xét duyệt" }).click();
   await expect(page.getByText("Hồ sơ gian hàng đã được gửi")).toBeVisible();
   await page.goto("/seller");

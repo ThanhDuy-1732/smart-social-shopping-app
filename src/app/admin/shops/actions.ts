@@ -24,3 +24,24 @@ export async function reviewApplication(
     return actionError(error);
   }
 }
+
+export async function changeShopState(
+  _state: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  try {
+    const { changeShopSuspension } = await import("@/modules/shops/service");
+    await changeShopSuspension(
+      await requireActor(await headers()),
+      String(data.get("shopId")),
+      data.get("suspended") === "true",
+      String(data.get("reason")),
+    );
+    revalidatePath("/admin/shops");
+    revalidatePath("/search");
+    revalidatePath("/seller");
+    return { success: "Đã cập nhật trạng thái gian hàng." };
+  } catch (error) {
+    return actionError(error);
+  }
+}

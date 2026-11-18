@@ -1,3 +1,5 @@
+import { optionalActor } from "@/server/optional-actor";
+import { ReportForm } from "@/components/report-form";
 import { getPublicReviews } from "@/modules/reviews/service";
 import { ActionForm } from "@/components/action-form";
 import { addToCart } from "@/app/(account)/cart/actions";
@@ -12,7 +14,8 @@ export default async function Product({
 }) {
   const product = await getPublicProduct((await params).id);
   if (!product) notFound();
-  const reviews=await getPublicReviews(product.id);
+  const actor = await optionalActor();
+  const reviews = await getPublicReviews(product.id);
   return (
     <>
       <p>
@@ -48,6 +51,7 @@ export default async function Product({
           {BigInt(product.price).toLocaleString("vi-VN")} ₫
         </p>
         <p style={{ whiteSpace: "pre-wrap" }}>{product.description}</p>
+        {actor && <ReportForm kind="product" targetId={product.id} />}
         <h2>Thông tin sản phẩm</h2>
         <dl>
           {Object.entries(product.attributes).map(([key, value]) => (
@@ -72,13 +76,49 @@ export default async function Product({
                 <tr key={v.id}>
                   <td>{v.label}</td>
                   <td>{BigInt(v.price).toLocaleString("vi-VN")} ₫</td>
-                  <td>{v.stock > 0 ? <ActionForm action={addToCart} submitLabel="Thêm vào giỏ"><input type="hidden" name="variantId" value={v.id}/><label>Số lượng<input type="number" name="quantity" min={1} max={Math.min(99,v.stock)} step={1} defaultValue={1} required/></label></ActionForm> : "Tạm hết hàng"}</td>
+                  <td>
+                    {v.stock > 0 ? (
+                      <ActionForm action={addToCart} submitLabel="Thêm vào giỏ">
+                        <input type="hidden" name="variantId" value={v.id} />
+                        <label>
+                          Số lượng
+                          <input
+                            type="number"
+                            name="quantity"
+                            min={1}
+                            max={Math.min(99, v.stock)}
+                            step={1}
+                            defaultValue={1}
+                            required
+                          />
+                        </label>
+                      </ActionForm>
+                    ) : (
+                      "Tạm hết hàng"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div><section className="panel section"><h2>Đánh giá từ người mua</h2>{reviews.length?reviews.map(r=><article key={r.id}><strong>{r.name} · {r.rating}/5</strong><p>{r.text}</p></article>):<p className="muted">Chưa có đánh giá từ giao dịch đã nhận hàng.</p>}</section>
+      </div>
+      <section className="panel section">
+        <h2>Đánh giá từ người mua</h2>
+        {reviews.length ? (
+          reviews.map((r) => (
+            <article key={r.id}>
+              <strong>
+                {r.name} · {r.rating}/5
+              </strong>
+              <p>{r.text}</p>
+              {actor && <ReportForm kind="review" targetId={r.id} />}
+            </article>
+          ))
+        ) : (
+          <p className="muted">Chưa có đánh giá từ giao dịch đã nhận hàng.</p>
+        )}
+      </section>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { pageActor } from "@/server/page-access";
 import { listShopApplications } from "@/modules/shops/service";
 import { ActionForm } from "@/components/action-form";
-import { reviewApplication } from "./actions";
+import { reviewApplication, changeShopState } from "./actions";
 export default async function Shops() {
   const actor = await pageActor("shops.review");
   const shops = await listShopApplications(actor);
@@ -46,8 +46,7 @@ export default async function Shops() {
                     <small>{shop.bankHolder}</small>
                   </td>
                   <td>
-                    {shop.status === "pending" &&
-                    shop.ownerUserId !== actor.userId ? (
+                    {shop.status === "pending" ? (
                       <ActionForm
                         action={reviewApplication}
                         submitLabel="Lưu quyết định"
@@ -75,7 +74,7 @@ export default async function Shops() {
                         <span className="status">
                           {
                             {
-                              pending: "Chờ người khác xét duyệt",
+                              pending: "Chờ xét duyệt",
                               approved: "Đã duyệt",
                               rejected: "Cần bổ sung",
                               suspended: "Tạm khóa",
@@ -83,6 +82,36 @@ export default async function Shops() {
                           }
                         </span>
                         <p>{shop.reviewReason}</p>
+                        {["approved", "suspended"].includes(shop.status) && (
+                          <ActionForm
+                            action={changeShopState}
+                            submitLabel={
+                              shop.status === "suspended"
+                                ? "Mở lại gian hàng"
+                                : "Tạm khóa gian hàng"
+                            }
+                          >
+                            <input
+                              type="hidden"
+                              name="shopId"
+                              value={shop.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="suspended"
+                              value={String(shop.status !== "suspended")}
+                            />
+                            <label>
+                              Lý do thay đổi
+                              <textarea
+                                name="reason"
+                                minLength={10}
+                                maxLength={1000}
+                                required
+                              />
+                            </label>
+                          </ActionForm>
+                        )}
                       </>
                     )}
                   </td>

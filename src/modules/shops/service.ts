@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
@@ -151,8 +152,16 @@ export async function reviewShop(
       )
     ).rows[0];
     if (!shop) throw new DomainError("NOT_FOUND", "Không tìm thấy gian hàng.");
-    if (shop.owner_user_id === actor.userId)
-      throw new DomainError("FORBIDDEN", "Không tự duyệt gian hàng của mình.");
+    if (
+      decision === "approve" &&
+      (
+        await client.query(
+          "SELECT 1 FROM account_state WHERE user_id=$1 AND suspended=true",
+          [shop.owner_user_id],
+        )
+      ).rowCount
+    )
+      throw new DomainError("CONFLICT", "Chủ gian hàng đang bị tạm khóa.");
     if (shop.status !== "pending")
       throw new DomainError("CONFLICT", "Hồ sơ không còn chờ duyệt.");
     await client.query(
@@ -169,4 +178,63 @@ export async function reviewShop(
       ],
     );
   });
+}
+
+export async function setShopSuspension(
+  client: PoolClient,
+  actor: Actor,
+  id: string,
+  suspended: boolean,
+  reason: string,
+) {
+  const shop = (
+    await client.query("SELECT * FROM shop WHERE id=$1 FOR UPDATE", [id])
+  ).rows[0];
+  if (!shop) throw new DomainError("NOT_FOUND", "Không tìm thấy gian hàng.");
+  if (suspended) {
+    if (shop.status === "suspended") return;
+    await client.query(
+      "UPDATE shop SET suspended_from=status,status='suspended',review_reason=$2 WHERE id=$1",
+      [id, reason],
+    );
+  } else {
+    if (shop.status !== "suspended")
+      throw new DomainError(
+        "CONFLICT",
+        "Gian hàng không ở trạng thái tạm khóa.",
+      );
+    if (
+      (
+        await client.query(
+          "SELECT 1 FROM account_state WHERE user_id=$1 AND suspended=true",
+          [shop.owner_user_id],
+        )
+      ).rowCount
+    )
+      throw new DomainError(
+        "CONFLICT",
+        "Cần mở khóa tài khoản chủ shop trước.",
+      );
+    await client.query(
+      "UPDATE shop SET status=coalesce(suspended_from,'pending'),suspended_from=null,review_reason=$2 WHERE id=$1",
+      [id, reason],
+    );
+  }
+  await client.query(
+    "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'shop.suspension',$3,$4)",
+    [randomUUID(), actor.userId, id, JSON.stringify({ suspended, reason })],
+  );
+}
+export async function changeShopSuspension(
+  actor: Actor,
+  id: string,
+  suspended: boolean,
+  reason: string,
+) {
+  await requirePermission(actor, "shops.review");
+  if (reason.trim().length < 10 || reason.length > 1000)
+    throw new DomainError("INVALID_INPUT", "Ghi rõ lý do ít nhất 10 ký tự.");
+  await withTransaction((client) =>
+    setShopSuspension(client, actor, id, suspended, reason.trim()),
+  );
 }

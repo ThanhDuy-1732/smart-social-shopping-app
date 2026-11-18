@@ -16,7 +16,8 @@ try {
     try {
       if (Date.now() - lastCleanup > 60000) {
         await cleanupExpiredUploads();
-        await releaseExpiredReservations();await refreshEligibleBalances();
+        await releaseExpiredReservations();
+        await refreshEligibleBalances();
         lastCleanup = Date.now();
       }
       if (!(await workMediaOnce())) await setTimeout(1000);

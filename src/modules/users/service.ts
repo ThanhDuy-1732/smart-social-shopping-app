@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db, withTransaction } from "@/server/db";
@@ -56,41 +57,48 @@ export async function setUserRole(
     );
   });
 }
+export async function setUserSuspension(
+  client: PoolClient,
+  actor: Actor,
+  userId: string,
+  suspended: boolean,
+) {
+  if (userId === actor.userId)
+    throw new DomainError(
+      "FORBIDDEN",
+      "Không tự khóa tài khoản quản trị của mình.",
+    );
+  const user = await client.query(
+    'SELECT id FROM "user" WHERE id=$1 FOR UPDATE',
+    [userId],
+  );
+  if (!user.rowCount)
+    throw new DomainError("NOT_FOUND", "Không tìm thấy tài khoản.");
+  await client.query(
+    "INSERT INTO account_state(user_id,suspended) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET suspended=$2",
+    [userId, suspended],
+  );
+  if (suspended) {
+    await client.query('DELETE FROM session WHERE "userId"=$1', [userId]);
+    await client.query(
+      "UPDATE shop SET suspended_from=status,status='suspended' WHERE owner_user_id=$1 AND status='approved'",
+      [userId],
+    );
+  }
+  await client.query(
+    "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'user.suspension',$3,$4)",
+    [randomUUID(), actor.userId, userId, JSON.stringify({ suspended })],
+  );
+}
 export async function suspendUser(
   actor: Actor,
   userId: string,
   suspended: boolean,
 ) {
   await requirePermission(actor, "users.manage");
-  if (userId === actor.userId)
-    throw new DomainError(
-      "FORBIDDEN",
-      "Không tự khóa tài khoản quản trị của mình.",
-    );
-  await withTransaction(async (client) => {
-    const user = await client.query(
-      'SELECT id FROM "user" WHERE id=$1 FOR UPDATE',
-      [userId],
-    );
-    if (!user.rowCount)
-      throw new DomainError("NOT_FOUND", "Không tìm thấy tài khoản.");
-    await client.query(
-      "INSERT INTO account_state(user_id,suspended) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET suspended=$2",
-      [userId, suspended],
-    );
-    if (suspended)
-      await client.query('DELETE FROM session WHERE "userId"=$1', [userId]);
-    await client.query(
-      "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,$3,$4,$5)",
-      [
-        randomUUID(),
-        actor.userId,
-        "user.suspension",
-        userId,
-        JSON.stringify({ suspended }),
-      ],
-    );
-  });
+  await withTransaction((client) =>
+    setUserSuspension(client, actor, userId, suspended),
+  );
 }
 export async function listUsers(actor: Actor) {
   await requirePermission(actor, "users.manage");

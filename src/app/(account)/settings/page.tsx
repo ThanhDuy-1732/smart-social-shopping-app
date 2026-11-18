@@ -13,8 +13,9 @@ export default async function Settings({
 }: {
   searchParams: Promise<{ access?: string }>;
 }) {
-  const actor=await pageActor();
-  const profile=await getPublicProfile(actor,actor.userId);const blocked=await listBlockedUsers(actor);
+  const actor = await pageActor();
+  const profile = await getPublicProfile(actor, actor.userId);
+  const blocked = await listBlockedUsers(actor);
   const session = await auth.api.getSession({ headers: await headers() });
   const query = await searchParams;
   return (
@@ -41,11 +42,38 @@ export default async function Settings({
           vận hành, hãy bật xác thực hai bước trước khi được cấp quyền.
         </p>
       )}
-      <div className="two-col"><div className="panel"><h2>Hồ sơ công khai</h2><ProfileForm name={profile?.name??''} bio={profile?.bio??''} avatarId={profile?.avatarId??null}/></div><div style={{ maxWidth: 560 }}>
-        <AccountSettings
-          twoFactorEnabled={session?.user.twoFactorEnabled ?? false}
-        />
-      </div></div><section className="panel section"><h2>Tài khoản đã chặn</h2>{blocked.length?blocked.map(u=><div className="row section" key={u.id}><span>{u.name}</span><ActionForm action={socialAction} submitLabel="Bỏ chặn"><input type="hidden" name="type" value="block"/><input type="hidden" name="targetId" value={u.id}/><input type="hidden" name="enabled" value="false"/></ActionForm></div>):<p className="muted">Bạn chưa chặn tài khoản nào.</p>}</section>
+      <div className="two-col">
+        <div className="panel">
+          <h2>Hồ sơ công khai</h2>
+          <ProfileForm
+            name={profile?.name ?? ""}
+            bio={profile?.bio ?? ""}
+            avatarId={profile?.avatarId ?? null}
+          />
+        </div>
+        <div style={{ maxWidth: 560 }}>
+          <AccountSettings
+            twoFactorEnabled={session?.user.twoFactorEnabled ?? false}
+          />
+        </div>
+      </div>
+      <section className="panel section">
+        <h2>Tài khoản đã chặn</h2>
+        {blocked.length ? (
+          blocked.map((u) => (
+            <div className="row section" key={u.id}>
+              <span>{u.name}</span>
+              <ActionForm action={socialAction} submitLabel="Bỏ chặn">
+                <input type="hidden" name="type" value="block" />
+                <input type="hidden" name="targetId" value={u.id} />
+                <input type="hidden" name="enabled" value="false" />
+              </ActionForm>
+            </div>
+          ))
+        ) : (
+          <p className="muted">Bạn chưa chặn tài khoản nào.</p>
+        )}
+      </section>
     </>
   );
 }

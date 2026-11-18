@@ -20,7 +20,7 @@ export type PostCard = {
   products: { id: string; name: string; available: boolean }[];
 };
 const visibility = `p.status='published' AND u."emailVerified"=true AND NOT EXISTS(SELECT 1 FROM account_state a WHERE a.user_id=u.id AND a.suspended=true) AND NOT EXISTS(SELECT 1 FROM user_block b WHERE (b.user_id=$1 AND b.target_id=p.author_id) OR (b.target_id=$1 AND b.user_id=p.author_id))`;
-const columns = `p.id,p.text,p.author_id AS "authorId",u.name AS "authorName",pr.avatar_id AS "avatarId",to_char(p.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt",p.topics,(SELECT count(*)::int FROM post_like l WHERE l.post_id=p.id) AS likes,(SELECT count(*)::int FROM post_comment c WHERE c.post_id=p.id AND c.hidden=false) AS "commentCount",EXISTS(SELECT 1 FROM post_like l WHERE l.post_id=p.id AND l.user_id=$1) AS liked,EXISTS(SELECT 1 FROM post_save s WHERE s.post_id=p.id AND s.user_id=$1) AS saved,EXISTS(SELECT 1 FROM user_follow f WHERE f.user_id=$1 AND f.target_id=p.author_id) AS following,
+const columns = `p.id,p.text,p.author_id AS "authorId",u.name AS "authorName",pr.avatar_id AS "avatarId",to_char(p.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt",p.topics,(SELECT count(*)::int FROM post_like l WHERE l.post_id=p.id) AS likes,(SELECT count(*)::int FROM post_comment c WHERE c.post_id=p.id AND c.hidden=false AND NOT EXISTS(SELECT 1 FROM account_state inactive WHERE inactive.user_id=c.author_id AND inactive.suspended=true)) AS "commentCount",EXISTS(SELECT 1 FROM post_like l WHERE l.post_id=p.id AND l.user_id=$1) AS liked,EXISTS(SELECT 1 FROM post_save s WHERE s.post_id=p.id AND s.user_id=$1) AS saved,EXISTS(SELECT 1 FROM user_follow f WHERE f.user_id=$1 AND f.target_id=p.author_id) AS following,
  (SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'kind',m.kind) ORDER BY pm.position),'[]') FROM post_media pm JOIN media m ON m.id=pm.media_id WHERE pm.post_id=p.id AND m.status='ready') AS media,
  (SELECT coalesce(jsonb_agg(jsonb_build_object('id',q.id,'name',CASE WHEN q.status='published' AND s.status='approved' THEN q.name ELSE 'Sản phẩm tạm ngừng bán' END,'available',q.status='published' AND s.status='approved')),'[]') FROM post_product pp JOIN product q ON q.id=pp.product_id JOIN shop s ON s.id=q.shop_id WHERE pp.post_id=p.id) AS products`;
 const from =
@@ -114,7 +114,7 @@ export async function getPost(actor: Actor | null, id: string) {
       authorName: string;
       text: string;
     }>(
-      'SELECT c.id,c.author_id AS "authorId",u.name AS "authorName",c.text FROM post_comment c JOIN "user" u ON u.id=c.author_id WHERE c.post_id=$2 AND c.hidden=false AND NOT EXISTS(SELECT 1 FROM user_block b WHERE (b.user_id=$1 AND b.target_id=c.author_id) OR (b.target_id=$1 AND b.user_id=c.author_id)) ORDER BY c.created_at,c.id LIMIT 100',
+      'SELECT c.id,c.author_id AS "authorId",u.name AS "authorName",c.text FROM post_comment c JOIN "user" u ON u.id=c.author_id WHERE c.post_id=$2 AND c.hidden=false AND NOT EXISTS(SELECT 1 FROM account_state inactive WHERE inactive.user_id=c.author_id AND inactive.suspended=true) AND NOT EXISTS(SELECT 1 FROM user_block b WHERE (b.user_id=$1 AND b.target_id=c.author_id) OR (b.target_id=$1 AND b.user_id=c.author_id)) ORDER BY c.created_at,c.id LIMIT 100',
       [actor?.userId ?? null, id],
     )
   ).rows;

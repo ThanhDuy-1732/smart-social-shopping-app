@@ -1,4 +1,14 @@
-export const adminNavigation = [{href:"/admin/settlements",label:"Đối soát",permission:"finance.manage"},
+export const adminNavigation = [
+  {
+    href: "/admin/moderation",
+    label: "Kiểm duyệt",
+    permission: "content.moderate",
+  },
+  {
+    href: "/admin/settlements",
+    label: "Đối soát",
+    permission: "finance.manage",
+  },
   { href: "/admin/users", label: "Người dùng", permission: "users.manage" },
   { href: "/admin/shops", label: "Nhà bán", permission: "shops.review" },
   {
