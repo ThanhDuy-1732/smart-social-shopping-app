@@ -1,3 +1,4 @@
+import { getPublicReviews } from "@/modules/reviews/service";
 import { ActionForm } from "@/components/action-form";
 import { addToCart } from "@/app/(account)/cart/actions";
 import Link from "next/link";
@@ -11,6 +12,7 @@ export default async function Product({
 }) {
   const product = await getPublicProduct((await params).id);
   if (!product) notFound();
+  const reviews=await getPublicReviews(product.id);
   return (
     <>
       <p>
@@ -76,7 +78,7 @@ export default async function Product({
             </tbody>
           </table>
         </div>
-      </div>
+      </div><section className="panel section"><h2>Đánh giá từ người mua</h2>{reviews.length?reviews.map(r=><article key={r.id}><strong>{r.name} · {r.rating}/5</strong><p>{r.text}</p></article>):<p className="muted">Chưa có đánh giá từ giao dịch đã nhận hàng.</p>}</section>
     </>
   );
 }

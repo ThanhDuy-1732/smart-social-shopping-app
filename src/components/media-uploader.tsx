@@ -4,14 +4,19 @@ type ReadyMedia = { id: string; kind: "image" | "video" };
 export function MediaUploader({
   items,
   onChange,
+  onPendingChange,
+  maxItems = 12,
 }: {
   items: ReadyMedia[];
   onChange: (items: ReadyMedia[]) => void;
+  onPendingChange: (pending: boolean) => void;
+  maxItems?: number;
 }) {
   const [pending, setPending] = useState(false),
     [message, setMessage] = useState("");
   async function upload(file: File) {
     setPending(true);
+    onPendingChange(true);
     setMessage("");
     try {
       const kind = file.type.startsWith("video/") ? "video" : "image";
@@ -47,6 +52,7 @@ export function MediaUploader({
       );
     } finally {
       setPending(false);
+      onPendingChange(false);
     }
   }
   return (
@@ -56,7 +62,7 @@ export function MediaUploader({
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,video/mp4"
-          disabled={pending || items.length >= 12}
+          disabled={pending || items.length >= maxItems}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) void upload(file);
@@ -65,8 +71,8 @@ export function MediaUploader({
         />
       </label>
       <p className="hint">
-        Tối đa 12 tệp. Ảnh tối đa 10 MB; video MP4 tối đa 50 MB, xử lý tối đa 2
-        phút.
+        Tối đa {maxItems} tệp. Ảnh tối đa 10 MB; video MP4 tối đa 50 MB, xử lý
+        tối đa 2 phút.
       </p>
       {pending && <p role="status">Đang tải và xử lý tệp…</p>}
       {message && (

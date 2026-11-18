@@ -5,16 +5,18 @@ export function ActionForm({
   action,
   children,
   submitLabel,
+  disabled = false,
 }: {
   action: (state: ActionState, data: FormData) => Promise<ActionState>;
   children: React.ReactNode;
   submitLabel: string;
+  disabled?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
     <form action={formAction} className="form">
       <fieldset
-        disabled={pending}
+        disabled={pending || disabled}
         style={{
           border: 0,
           padding: 0,
@@ -25,7 +27,7 @@ export function ActionForm({
         }}
       >
         {children}
-        <button disabled={pending}>
+        <button disabled={pending || disabled}>
           {pending ? "Đang xử lý…" : submitLabel}
         </button>
       </fieldset>

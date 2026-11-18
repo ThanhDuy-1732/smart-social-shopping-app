@@ -29,6 +29,7 @@ export function ProductEditor({
   categories: { id: string; name: string; attributes: AttributeDefinition[] }[];
   product?: EditableProduct;
 }) {
+  const [uploading, setUploading] = useState(false);
   const [media, setMedia] = useState(product?.media ?? []);
   const [categoryId, setCategoryId] = useState(
     product?.categoryId ?? categories[0]?.id ?? "",
@@ -53,7 +54,11 @@ export function ProductEditor({
       </p>
     );
   return (
-    <ActionForm action={submitProduct} submitLabel="Lưu và gửi duyệt">
+    <ActionForm
+      action={submitProduct}
+      submitLabel="Lưu và gửi duyệt"
+      disabled={uploading}
+    >
       <input type="hidden" name="shopId" value={shopId} />
       {product && <input type="hidden" name="id" value={product.id} />}
       <input
@@ -61,7 +66,11 @@ export function ProductEditor({
         name="mediaIds"
         value={JSON.stringify(media.map((x) => x.id))}
       />
-      <MediaUploader items={media} onChange={setMedia} />
+      <MediaUploader
+        items={media}
+        onChange={setMedia}
+        onPendingChange={setUploading}
+      />
       <input type="hidden" name="variants" value={JSON.stringify(variants)} />
       <label>
         Tên sản phẩm

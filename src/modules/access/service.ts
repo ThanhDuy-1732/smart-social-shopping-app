@@ -33,23 +33,24 @@ export async function requireActor(headers: Headers): Promise<Actor> {
   await assertActiveActor(actor);
   return actor;
 }
+export async function getAllowedPermissions(actor: Actor): Promise<string[]> {
+  await assertActiveActor(actor);
+  const roles = (
+    await db.query<{ role: string }>(
+      'SELECT r.role FROM user_role r JOIN "user" u ON u.id=r.user_id WHERE r.user_id=$1 AND u."twoFactorEnabled"=true',
+      [actor.userId],
+    )
+  ).rows.map((x) => x.role);
+  return Object.entries(permissions)
+    .filter(([, allowed]) => allowed.some((role) => roles.includes(role)))
+    .map(([key]) => key);
+}
 export async function requirePermission(
   actor: Actor,
   permission: string,
   _shopId?: string,
 ): Promise<void> {
-  await assertActiveActor(actor);
-  const allowed = permissions[permission];
-  if (!allowed)
-    throw new DomainError(
-      "FORBIDDEN",
-      "Bạn không có quyền thực hiện thao tác này.",
-    );
-  const { rows } = await db.query(
-    'SELECT 1 FROM user_role r JOIN "user" u ON u.id=r.user_id WHERE r.user_id=$1 AND r.role=ANY($2::text[]) AND u."twoFactorEnabled"=true',
-    [actor.userId, allowed],
-  );
-  if (!rows.length)
+  if (!(await getAllowedPermissions(actor)).includes(permission))
     throw new DomainError(
       "FORBIDDEN",
       "Thao tác này yêu cầu đúng quyền và xác thực hai bước.",

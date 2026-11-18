@@ -5,7 +5,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import sharp from "sharp";
 import { db, withTransaction } from "@/server/db";
-import { assertActiveActor } from "@/modules/access/service";
+import {
+  assertActiveActor,
+  getAllowedPermissions,
+} from "@/modules/access/service";
 import { enqueueJob, claimJob, completeJob, failJob } from "@/server/jobs";
 import { DomainError, type Actor } from "@/modules/shared/types";
 export type Media = {
@@ -142,6 +145,42 @@ export async function readMedia(
         )
       ).rowCount,
     );
+  if (!allowed && actor) {
+    const attached = (
+      await db.query(
+        'SELECT c.buyer_id AS "buyerId",s.owner_user_id AS "ownerId" FROM return_evidence e JOIN return_case r ON r.id=e.case_id JOIN shop_order o ON o.id=r.order_id JOIN checkout c ON c.id=o.checkout_id JOIN shop s ON s.id=o.shop_id WHERE e.media_id=$1 UNION ALL SELECT c.buyer_id,s.owner_user_id FROM order_evidence e JOIN shop_order o ON o.id=e.order_id JOIN checkout c ON c.id=o.checkout_id JOIN shop s ON s.id=o.shop_id WHERE e.media_id=$1',
+        [id],
+      )
+    ).rows;
+    allowed = attached.some(
+      (x) => x.buyerId === actor.userId || x.ownerId === actor.userId,
+    );
+    if (!allowed) {
+      const productAttached = Boolean(
+        (await db.query("SELECT 1 FROM product_media WHERE media_id=$1", [id]))
+          .rowCount,
+      );
+      if (attached.length || productAttached) {
+        const permissions = await getAllowedPermissions(actor);
+        allowed = attached.length
+          ? permissions.includes("disputes.manage") ||
+            permissions.includes("finance.manage")
+          : permissions.includes("content.moderate");
+        if (allowed)
+          await db.query(
+            "INSERT INTO audit_event(id,actor_id,action,target_id,details) VALUES($1,$2,'evidence.read',$3,$4)",
+            [
+              randomUUID(),
+              actor.userId,
+              id,
+              JSON.stringify({
+                scope: attached.length ? "order" : "product-review",
+              }),
+            ],
+          );
+      }
+    }
+  }
   if (!allowed) throw new DomainError("NOT_FOUND", "Không tìm thấy tệp.");
   return {
     bytes: await readFile(

@@ -1,21 +1,31 @@
 import Link from "next/link";
 import { pageActor } from "@/server/page-access";
+import { getAllowedPermissions } from "@/modules/access/service";
+import { adminNavigation } from "@/modules/access/admin-navigation";
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await pageActor();
+  const actor = await pageActor();
+  const allowed = await getAllowedPermissions(actor);
+  const items = adminNavigation.filter((item) =>
+    allowed.includes(item.permission),
+  );
   return (
     <>
       <nav className="subnav" aria-label="Quản trị">
         <Link href="/admin">Tổng quan</Link>
-        <Link href="/admin/users">Người dùng</Link>
-        <Link href="/admin/shops">Nhà bán</Link>
-        <Link href="/admin/policies">Chính sách</Link>
-        <Link href="/admin/categories">Danh mục</Link>
-        <Link href="/admin/products">Sản phẩm</Link>
-        <Link href="/admin/jobs">Tác vụ nền</Link><Link href="/admin/payments">Thanh toán</Link>
+        {items
+          .filter(
+            (item, index) =>
+              items.findIndex((x) => x.href === item.href) === index,
+          )
+          .map((item) => (
+            <Link key={item.href} href={item.href}>
+              {item.label}
+            </Link>
+          ))}
       </nav>
       {children}
     </>

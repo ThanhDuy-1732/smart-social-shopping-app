@@ -1,27 +1,31 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { pageActor } from "@/server/page-access";
+import { getAllowedPermissions } from "@/modules/access/service";
+import { adminNavigation } from "@/modules/access/admin-navigation";
 export default async function Admin() {
-  await pageActor("users.manage");
+  const actor = await pageActor();
+  const allowed = await getAllowedPermissions(actor);
+  if (!allowed.length) redirect("/settings?access=denied");
+  const items = adminNavigation.filter((item) =>
+    allowed.includes(item.permission),
+  );
   return (
     <>
-      <h1>Quản trị nền tảng</h1>
-      <p className="muted">
-        Quản lý tài khoản, duyệt nhà bán và thiết lập chính sách trước khi mở
-        bán.
-      </p>
+      <h1>Khu vận hành</h1>
+      <p className="muted">Các chức năng được mở theo quyền của tài khoản.</p>
       <div className="grid">
-        <Link className="panel" href="/admin/users">
-          <h2>Người dùng</h2>
-          <p>Cấp quyền, thu hồi quyền và trạng thái tài khoản.</p>
-        </Link>
-        <Link className="panel" href="/admin/shops">
-          <h2>Nhà bán</h2>
-          <p>Xem hồ sơ và duyệt gian hàng.</p>
-        </Link>
-        <Link className="panel" href="/admin/policies">
-          <h2>Chính sách</h2>
-          <p>Thiết lập phí và điều kiện giao dịch.</p>
-        </Link>
+        {items
+          .filter(
+            (item, index) =>
+              items.findIndex((x) => x.href === item.href) === index,
+          )
+          .map((item) => (
+            <Link className="panel" href={item.href} key={item.href}>
+              <h2>{item.label}</h2>
+              <p>Xem và xử lý {item.label.toLowerCase()}.</p>
+            </Link>
+          ))}
       </div>
     </>
   );

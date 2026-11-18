@@ -82,3 +82,46 @@ export async function cleanupCommerce(f: CommerceFixture) {
     await db.query('DELETE FROM "user" WHERE id=$1', [actor.userId]);
   await db.query("DELETE FROM category WHERE id=$1", [f.categoryId]);
 }
+export async function paidOrder(f: CommerceFixture, productIndex = 0) {
+  const { setCartItem, quoteCart, createCheckout } =
+    await import("@/modules/checkout/service");
+  const { applyVerifiedPaymentEvent } =
+    await import("@/modules/payments/service");
+  const { setShippingRate } = await import("@/modules/shipping/service");
+  const p = f.products[productIndex];
+  await setShippingRate(p.owner, p.shopId, {
+    region: "*",
+    fee: "30000",
+    estimatedDays: 3,
+  });
+  await setCartItem(f.buyer, p.variantId, 1);
+  const address = {
+    name: "Người nhận thử",
+    phone: "0901234567",
+    region: "Hà Nội",
+    line: "12 đường A, phường B, Hà Nội",
+  };
+  const quote = await quoteCart(f.buyer, { region: address.region });
+  const checkout = await createCheckout(
+    f.buyer,
+    { address, quoteToken: quote.token },
+    randomUUID(),
+  );
+  const paymentId = randomUUID();
+  await db.query(
+    "INSERT INTO payment_intent(id,checkout_id,provider_reference,amount,currency) VALUES($1,$2,$3,$4,'VND')",
+    [paymentId, checkout.id, paymentId, checkout.total],
+  );
+  await applyVerifiedPaymentEvent({
+    eventId: randomUUID(),
+    providerReference: paymentId,
+    amount: checkout.total,
+    currency: "VND",
+    status: "paid",
+  });
+  return {
+    checkoutId: checkout.id,
+    orderId: checkout.orders[0].id,
+    owner: p.owner,
+  };
+}

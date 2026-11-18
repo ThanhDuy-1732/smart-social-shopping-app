@@ -104,13 +104,22 @@ test("registered seller submits application and an MFA admin reviews it", async 
     .getByRole("textbox", { name: "Điều kiện hủy đơn", exact: true })
     .fill("Hủy trước khi shop xác nhận đơn.");
   await adminPage
-    .getByRole("textbox", { name: "Điều kiện đổi trả / hoàn tiền", exact: true })
+    .getByRole("textbox", {
+      name: "Điều kiện đổi trả / hoàn tiền",
+      exact: true,
+    })
     .fill("Yêu cầu đổi trả khi hàng sai mô tả.");
   await adminPage
-    .getByRole("textbox", { name: "Cách xác nhận giao hàng thành công", exact: true })
+    .getByRole("textbox", {
+      name: "Cách xác nhận giao hàng thành công",
+      exact: true,
+    })
     .fill("Khách xác nhận hoặc hỗ trợ kiểm tra.");
   await adminPage
-    .getByRole("textbox", { name: "Quy định giao hàng và phí vận chuyển", exact: true })
+    .getByRole("textbox", {
+      name: "Quy định giao hàng và phí vận chuyển",
+      exact: true,
+    })
     .fill("Shop tự giao, phí công bố trước đặt hàng.");
   await adminPage
     .getByRole("button", { name: "Công bố chính sách mới", exact: true })
