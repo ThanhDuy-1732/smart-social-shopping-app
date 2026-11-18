@@ -11,6 +11,7 @@ const copy = {
   'two-factor': ['Xác thực hai bước', 'Nhập mã 6 chữ số trong ứng dụng xác thực của bạn.', 'Xác nhận'],
 };
 export function AuthForm({ mode }: { mode: Mode }) {
+  const [backup, setBackup] = useState(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
@@ -38,7 +39,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         if (result.error) throw new Error('Liên kết đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu liên kết mới.');
         setMessage('Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.');
       } else {
-        const result = await authClient.twoFactor.verifyTotp({ code: String(data.get('code')) });
+        const result = backup ? await authClient.twoFactor.verifyBackupCode({ code: String(data.get('code')) }) : await authClient.twoFactor.verifyTotp({ code: String(data.get('code')) });
         if (result.error) throw new Error('Mã chưa đúng hoặc đã hết hạn. Vui lòng thử mã mới.');
         window.location.assign('/settings');
       }
@@ -50,7 +51,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {mode === 'register' && <label>Tên hiển thị<input name="name" autoComplete="name" minLength={2} maxLength={80} required /></label>}
       {['login','register','forgot'].includes(mode) && <label>Email<input type="email" name="email" autoComplete="email" maxLength={254} required /></label>}
       {['login','register','reset'].includes(mode) && <label>Mật khẩu<input type="password" name="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'login' ? 1 : 12} maxLength={128} required /></label>}
-      {mode === 'two-factor' && <label>Mã xác thực<input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>}
+      {mode === 'two-factor' && <><label className="inline-check"><input type="checkbox" checked={backup} onChange={event => setBackup(event.target.checked)}/>Dùng mã dự phòng</label><label>{backup ? 'Mã dự phòng' : 'Mã xác thực'}<input name="code" inputMode={backup ? 'text' : 'numeric'} autoComplete="one-time-code" pattern={backup ? undefined : '[0-9]{6}'} maxLength={backup ? 128 : 6} required /></label></>}
       <button disabled={pending}>{pending ? 'Đang xử lý…' : copy[mode][2]}</button>
     </form>
     {message && <p className={`notice ${failed ? 'error' : 'success'}`} role={failed ? 'alert' : 'status'}>{message}</p>}

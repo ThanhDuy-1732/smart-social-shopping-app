@@ -87,3 +87,32 @@ test('expired reset links fail and logout invalidates the server session', async
   await auth.api.signOut({ headers: new Headers({ cookie }), asResponse: true });
   await expect(requireActor(new Headers({ cookie }))).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
 });
+
+test('enabling MFA revokes sessions created before the second factor was proved', async () => {
+  const { createHmac } = await import('node:crypto');
+  const email = `mfa-${randomUUID()}@example.test`;
+  const user = (await auth.api.signUpEmail({ body: { email, name: 'Bảo mật', password: 'A-secure-password-123!' } })).user;
+  try {
+    await db.query('UPDATE "user" SET "emailVerified"=true WHERE id=$1', [user.id]);
+    async function login() {
+      const response = await auth.api.signInEmail({ body: { email, password: 'A-secure-password-123!' }, asResponse: true });
+      return response.headers.getSetCookie().map(x => x.split(';')[0]).join('; ');
+    }
+    const first = await login();
+    const second = await login();
+    const enabled = await auth.api.enableTwoFactor({ headers: new Headers({ cookie: first }), body: { password: 'A-secure-password-123!' } });
+    if (enabled.method !== 'totp') throw new Error('Expected TOTP enrollment');
+    const secret = new URL(enabled.totpURI).searchParams.get('secret')!;
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    const bits = [...secret.replace(/=/g,'')].map(c => alphabet.indexOf(c).toString(2).padStart(5,'0')).join('');
+    const bytes = Buffer.from((bits.match(/.{8}/g) ?? []).map(x => parseInt(x,2)));
+    const counter = Buffer.alloc(8); counter.writeBigUInt64BE(BigInt(Math.floor(Date.now()/30000)));
+    const hash = createHmac('sha1', bytes).update(counter).digest();
+    const code = ((hash.readUInt32BE(hash[hash.length-1] & 15) & 0x7fffffff) % 1000000).toString().padStart(6,'0');
+    const verified = await auth.api.verifyTOTP({ headers: new Headers({ cookie: first }), body: { code }, asResponse: true });
+    expect(verified.status).toBe(200);
+    const current = verified.headers.getSetCookie().map(x => x.split(';')[0]).join('; ');
+    expect(await requireActor(new Headers({ cookie: current }))).toEqual({ userId: user.id });
+    await expect(requireActor(new Headers({ cookie: second }))).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+  } finally { await db.query('DELETE FROM "user" WHERE id=$1', [user.id]); }
+});

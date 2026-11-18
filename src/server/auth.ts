@@ -23,5 +23,10 @@ export const auth = betterAuth({
   session: { cookieCache: { enabled: false }, expiresIn: 60 * 60 * 24 * 7 },
   rateLimit: { enabled: true, storage: 'database', window: 60, max: 30 },
   advanced: { database: { generateId: () => randomUUID() } },
+  databaseHooks: { user: { update: { before: async (user, context) => {
+    if (user.twoFactorEnabled === true && context?.context.session?.user.id) {
+      await db.query('DELETE FROM session WHERE \"userId\"=$1', [context.context.session.user.id]);
+    }
+  } } } },
   plugins: [twoFactor({ issuer: 'Mình dùng' })],
 });
