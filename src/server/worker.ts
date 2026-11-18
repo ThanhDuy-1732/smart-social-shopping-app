@@ -1,3 +1,4 @@
+import { workPushOnce } from "@/modules/notifications/push";
 import { refreshEligibleBalances } from "@/modules/finance/service";
 import { releaseExpiredReservations } from "@/modules/checkout/service";
 import { setTimeout } from "node:timers/promises";
@@ -23,7 +24,8 @@ try {
       }
       const mediaWorked = await workMediaOnce();
       const emailWorked = await workEmailOnce();
-      if (!mediaWorked && !emailWorked) await setTimeout(1000);
+      const pushWorked = await workPushOnce();
+      if (!mediaWorked && !emailWorked && !pushWorked) await setTimeout(1000);
     } catch (error) {
       console.error("Worker failed", {
         name: error instanceof Error ? error.name : "UnknownError",

@@ -1,4 +1,5 @@
 "use client";
+import { announceAuthChange } from "./auth-change";
 import { useState } from "react";
 import { authClient } from "./auth-client";
 export function AccountSettings({
@@ -119,6 +120,7 @@ export function AccountSettings({
             setMessage("Chưa đăng xuất được. Vui lòng thử lại.");
             return;
           }
+          announceAuthChange();
           window.location.assign("/login");
         }}
       >

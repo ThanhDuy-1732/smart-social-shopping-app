@@ -1,4 +1,5 @@
 "use client";
+import { announceAuthChange } from "./auth-change";
 import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "./auth-client";
@@ -52,8 +53,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
               ? "Vui lòng mở email xác minh tài khoản. Bạn có thể đăng nhập lại để nhận liên kết mới."
               : "Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.",
           );
-        if (!("twoFactorRedirect" in (result.data ?? {})))
+        if (!("twoFactorRedirect" in (result.data ?? {}))) {
+          announceAuthChange();
           window.location.assign("/settings");
+        }
       } else if (mode === "register") {
         const result = await authClient.signUp.email({
           email,
@@ -62,7 +65,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
         });
         if (result.error)
           throw new Error(
-            result.error.status===429 ? "Bạn đã thử nhiều lần. Vui lòng chờ một lát rồi thử lại." : "Chưa tạo được tài khoản. Kiểm tra thông tin hoặc thử đăng nhập nếu đã đăng ký.",
+            result.error.status === 429
+              ? "Bạn đã thử nhiều lần. Vui lòng chờ một lát rồi thử lại."
+              : "Chưa tạo được tài khoản. Kiểm tra thông tin hoặc thử đăng nhập nếu đã đăng ký.",
           );
         setMessage("Vui lòng mở email xác minh trước khi đăng nhập.");
       } else if (mode === "forgot") {

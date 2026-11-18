@@ -27,3 +27,7 @@ Phase 3: giỏ/đơn nhiều shop, giữ kho nguyên tử, sự kiện thanh to�
 Mốc cuối phase 3: 51 integration tests pass, typecheck pass, build pass. Luồng E2E tạo đơn local pass (không thu tiền thật). Hoàn sau khi đã chi trả shop cần quy trình nguồn bù/thu hồi trước production; hiện chặn thao tác để tránh ghi nhận sai tiền.
 
 Chat local: hộp thư riêng, ảnh, thẻ sản phẩm/bài/đơn, trạng thái đọc, chống gửi trùng, chặn người dùng; SSE kiểm tra lại phiên và polling dự phòng. Kiểm duyệt chỉ xem từng tin đã bị báo cáo. Thông báo giao dịch và email qua worker/outbox; local không gửi email ra ngoài. E2E hai phiên gửi/đọc/reload/logout và chặn khách ngoài đã pass.
+
+Phase 4 local: Social, kiểm duyệt, chat, gợi ý từ khóa và danh sách chuẩn bị đã có. Chưa tích hợp AI thật; giao diện ghi rõ chế độ local. Không có mô hình local hay tài khoản AI để đánh giá semantic/chi phí.
+
+PWA: manifest/icons, cài đặt khi trình duyệt hỗ trợ, trang offline, cập nhật có xác nhận và không tự ngắt checkout. Cache chỉ gồm trang offline và icons. E2E đổi tài khoản → truy cập chat cũ → offline đã pass; không hiện dữ liệu tài khoản trước. Push có API/worker và đăng ký gắn với phiên, tự hủy liên kết khi logout; chưa có VAPID/contact để thử gửi thật hoặc thiết bị Android/iOS để nghiệm thu.

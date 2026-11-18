@@ -1,3 +1,4 @@
+import { PushControls } from "@/components/push-controls";
 import { ProfileForm } from "@/components/profile-form";
 import { getPublicProfile } from "@/modules/social/queries";
 import { listBlockedUsers } from "@/modules/social/service";
@@ -42,6 +43,9 @@ export default async function Settings({
           vận hành, hãy bật xác thực hai bước trước khi được cấp quyền.
         </p>
       )}
+      <PushControls
+        publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
+      />
       <div className="two-col">
         <div className="panel">
           <h2>Hồ sơ công khai</h2>

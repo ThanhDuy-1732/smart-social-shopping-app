@@ -1,3 +1,4 @@
+import { PrivateSession } from "@/components/private-session";
 import Link from "next/link";
 import { pageActor } from "@/server/page-access";
 export default async function SellerLayout({
@@ -5,9 +6,9 @@ export default async function SellerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await pageActor();
+  const actor = await pageActor();
   return (
-    <>
+    <PrivateSession key={actor.userId} userId={actor.userId}>
       <nav className="subnav" aria-label="Gian hàng">
         <Link href="/seller">Tổng quan</Link>
         <Link href="/seller/products">Sản phẩm</Link>
@@ -16,6 +17,6 @@ export default async function SellerLayout({
         <Link href="/seller/finance">Đối soát</Link>
       </nav>
       {children}
-    </>
+    </PrivateSession>
   );
 }

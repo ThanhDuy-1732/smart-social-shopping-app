@@ -27,7 +27,7 @@ export function ChatRoom({
     [error, setError] = useState(""),
     [reference, setReference] = useState(initialReference),
     [valid, setValid] = useState(true);
-  const initialized=useRef(false);
+  const initialized = useRef(false);
   const retry = useRef<{ payload: string; key: string } | null>(null),
     endpoint = `/api/chat/conversations/${room.id}`;
   async function refresh(before?: string) {
@@ -54,7 +54,7 @@ export function ChatRoom({
         );
       });
       if (before || !initialized.current) setCursor(data.nextCursor);
-      initialized.current=true;
+      initialized.current = true;
       if (!before && document.visibilityState === "visible")
         await fetch(endpoint, {
           method: "PATCH",

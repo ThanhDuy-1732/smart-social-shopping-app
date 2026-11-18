@@ -1,3 +1,4 @@
+import { PrivateSession } from "@/components/private-session";
 import Link from "next/link";
 import { pageActor } from "@/server/page-access";
 import { getAllowedPermissions } from "@/modules/access/service";
@@ -13,7 +14,7 @@ export default async function AdminLayout({
     allowed.includes(item.permission),
   );
   return (
-    <>
+    <PrivateSession key={actor.userId} userId={actor.userId}>
       <nav className="subnav" aria-label="Quản trị">
         <Link href="/admin">Tổng quan</Link>
         {items
@@ -28,6 +29,6 @@ export default async function AdminLayout({
           ))}
       </nav>
       {children}
-    </>
+    </PrivateSession>
   );
 }

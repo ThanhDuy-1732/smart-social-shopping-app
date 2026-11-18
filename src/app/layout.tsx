@@ -1,3 +1,4 @@
+import { PwaControls } from "@/components/pwa-controls";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
@@ -33,6 +34,7 @@ export default function RootLayout({
           </div>
         </header>
         <main id="content">{children}</main>
+        <PwaControls />
         <footer className="site-footer">
           <span>Mình dùng · Chọn từ trải nghiệm thật.</span>
           <span>

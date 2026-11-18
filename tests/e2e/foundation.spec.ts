@@ -15,14 +15,23 @@ async function register(page: Page, name: string) {
   await page.getByLabel("Tên hiển thị").fill(name);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
-  const responsePromise=page.waitForResponse(r=>r.url().endsWith('/sign-up/email'));
+  const responsePromise = page.waitForResponse((r) =>
+    r.url().endsWith("/sign-up/email"),
+  );
   await page
     .getByRole("button", { name: "Tạo tài khoản", exact: true })
     .click();
-  const signupResponse=await responsePromise;
-  if(signupResponse.status()===429){
-    await new Promise(resolve=>setTimeout(resolve,(Number(signupResponse.headers()['x-retry-after'])||10)*1000+100));
-    await page.getByRole('button',{name:'Tạo tài khoản',exact:true}).click();
+  const signupResponse = await responsePromise;
+  if (signupResponse.status() === 429) {
+    await new Promise((resolve) =>
+      setTimeout(
+        resolve,
+        (Number(signupResponse.headers()["x-retry-after"]) || 10) * 1000 + 100,
+      ),
+    );
+    await page
+      .getByRole("button", { name: "Tạo tài khoản", exact: true })
+      .click();
   }
 
   await expect(page.getByRole("status")).toContainText("xác minh");
@@ -270,6 +279,10 @@ test("private chat delivers between two sessions, rejects outsiders and reconnec
   await page
     .getByRole("textbox", { name: "Tin nhắn", exact: true })
     .fill("Xin chào từ phiên A");
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(
+    page.getByRole("textbox", { name: "Tin nhắn", exact: true }),
+  ).toHaveValue("Xin chào từ phiên A");
   await page.getByRole("button", { name: "Gửi tin nhắn", exact: true }).click();
   await expect(page.getByRole("log")).toContainText("Xin chào từ phiên A");
   await other.goto(path);
@@ -301,15 +314,27 @@ test("private chat delivers between two sessions, rejects outsiders and reconnec
     ).status(),
   ).toBe(401);
   await outsider.close();
-  await page.goto('/discover?q='+encodeURIComponent('Tôi muốn đi Trung Quốc'));
-  await expect(page.getByText('Chế độ local theo mẫu và từ khóa. AI chưa được kết nối.')).toBeVisible();
-  await page.getByRole('textbox',{name:'Tên danh sách',exact:true}).fill('Hành lý chuyến đi');
-  await page.getByRole('button',{name:'Lưu danh sách',exact:true}).click();
+  await page.goto(
+    "/discover?q=" + encodeURIComponent("Tôi muốn đi Trung Quốc"),
+  );
+  await expect(
+    page.getByText("Chế độ local theo mẫu và từ khóa. AI chưa được kết nối."),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Tên danh sách", exact: true })
+    .fill("Hành lý chuyến đi");
+  await page
+    .getByRole("button", { name: "Lưu danh sách", exact: true })
+    .click();
   await expect(page).toHaveURL(/lists\/[a-f0-9-]+$/);
-  await expect(page.getByRole('heading',{name:'Hành lý chuyến đi',exact:true})).toBeVisible();
-  await page.getByRole('checkbox').first().check();
-  await page.getByRole('button',{name:'Lưu danh sách',exact:true}).click();
-  await expect(page.getByRole('checkbox').first()).toBeChecked();
+  await expect(
+    page.getByRole("heading", { name: "Hành lý chuyến đi", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("checkbox").first().check();
+  await page
+    .getByRole("button", { name: "Lưu danh sách", exact: true })
+    .click();
+  await expect(page.getByRole("checkbox").first()).toBeChecked();
   await page.goto("/settings");
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -318,5 +343,26 @@ test("private chat delivers between two sessions, rejects outsiders and reconnec
       await page.request.get(`/api/chat/conversations/${path.split("/").pop()}`)
     ).status(),
   ).toBe(401);
+  await page.goBack();
+  await expect(page.getByRole("log")).not.toBeVisible();
+  await register(page, "Tài khoản khác sau đăng xuất");
+  await page.goto(path);
+  await expect(
+    page.getByText("Xin chào từ phiên A", { exact: true }),
+  ).not.toBeVisible();
+  expect(
+    (
+      await page.request.get(`/api/chat/conversations/${path.split("/").pop()}`)
+    ).status(),
+  ).toBe(404);
+  await page.context().setOffline(true);
+  await page.goto(path);
+  await expect(
+    page.getByRole("heading", { name: "Bạn đang ngoại tuyến" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Xin chào từ phiên A", { exact: true }),
+  ).not.toBeVisible();
+  await page.context().setOffline(false);
   await otherContext.close();
 });
