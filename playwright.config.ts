@@ -10,11 +10,11 @@ export default defineConfig({
   timeout: 45000,
   use: {
     baseURL: "http://127.0.0.1:14387",
-    channel: "chrome",
+    channel: process.env.CI ? undefined : "chrome",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --port 14387",
+    command: "npx next dev --hostname 127.0.0.1 --port 14387",
     url: "http://127.0.0.1:14387",
     reuseExistingServer: false,
     env: { ...env, BETTER_AUTH_URL: "http://127.0.0.1:14387" },

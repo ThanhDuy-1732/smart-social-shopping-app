@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
+    "dev": "next dev --hostname 127.0.0.1 --port 14388",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
@@ -12,7 +12,8 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:local": "bash scripts/local-db.sh",
     "admin:grant": "tsx --env-file=.env.local scripts/grant-admin.ts",
-    "worker": "tsx --env-file=.env.local src/server/worker.ts"
+    "worker": "tsx --env-file=.env.local src/server/worker.ts",
+    "db:backup": "tsx --env-file=.env.local scripts/backup.ts"
   },
   "dependencies": {
     "better-auth": "1.7.25",

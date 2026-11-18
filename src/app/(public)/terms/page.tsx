@@ -29,6 +29,12 @@ export default async function Terms() {
         {policy.returnDays} ngày. Chờ đối soát sau nhận hàng:{" "}
         {policy.settlementHoldDays} ngày.
       </p>
+      <p>
+        Phí tính trên tiền hàng còn lại sau hoàn, không gồm phí giao hàng; làm
+        tròn đến một đồng, phần lẻ từ 0,5 đồng làm tròn lên. Tiền chỉ đủ điều
+        kiện đối soát khi hết cả thời hạn đổi trả và thời gian chờ, không có yêu
+        cầu đang mở. Chi trả theo tuần cần được quản trị duyệt.
+      </p>
       {[
         ["Hủy đơn", policy.cancellationTerms],
         ["Đổi trả và hoàn tiền", policy.returnTerms],

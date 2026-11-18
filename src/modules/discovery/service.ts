@@ -140,12 +140,22 @@ export async function discover(
     const visibleProducts: ProductCard[] = [];
     for (const p of [...products.values()].slice(0, 6)) {
       const current = await getPublicProduct(p.id);
-      if (
-        current &&
-        current.stock > 0 &&
-        (!budget || BigInt(current.price) <= BigInt(budget))
-      )
-        visibleProducts.push(current);
+      if (current) {
+        const available = current.variants.filter(
+          (v) => v.stock > 0 && (!budget || BigInt(v.price) <= BigInt(budget)),
+        );
+        if (available.length)
+          visibleProducts.push({
+            ...current,
+            price: available
+              .reduce(
+                (min, v) => (BigInt(v.price) < min ? BigInt(v.price) : min),
+                BigInt(available[0].price),
+              )
+              .toString(),
+            stock: available.reduce((sum, v) => sum + v.stock, 0),
+          });
+      }
     }
     const visiblePosts: PostCard[] = [];
     for (const p of [...posts.values()].slice(0, 3)) {

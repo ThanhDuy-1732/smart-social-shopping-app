@@ -41,3 +41,9 @@ Media local phục vụ phát triển một máy, bị chặn upload trong produ
 Nhà bán thiết lập phí tại `/seller/shipping`; khách thêm giỏ và xem tổng tiền trước khi tạo đơn. Đơn giữ hàng 15 phút, worker giải phóng khi hết hạn. Khi chưa kết nối provider, không có nút giả lập thanh toán thành công hoặc callback không xác thực.
 
 Các kiểm thử tạo dữ liệu giao dịch trong database `_test` để kiểm chứng nghiệp vụ. Sổ tài chính ghi bút toán cân đối, chống sự kiện trùng; phí tính trên phần tiền hàng sau hoàn, không gồm giao hàng, làm tròn half-up đến VND. Điều kiện đối soát là đã nhận hàng, hết cả cửa sổ đổi trả/thời gian chờ và không có yêu cầu mở. Chi trả chỉ được ghi nhận thủ công với bằng chứng; ứng dụng không chuyển tiền qua ngân hàng.
+
+## PWA và nghiệm thu
+
+`npm run dev` mặc định tại http://127.0.0.1:14388; E2E dùng 14387. PWA chỉ cache trang offline và icons, không lưu chat/đơn/tài khoản ngoại tuyến. AI hiện là gợi ý từ khóa local, được ghi rõ trên giao diện.
+
+Hướng dẫn: `docs/operations/runbook.md`. Điều kiện mở bán và tích hợp đang chờ: `docs/operations/launch-checklist.md`. Backup: `npm run db:backup` với PostgreSQL 18+ client; `PG_DUMP_PATH`/`PG_RESTORE_PATH` nếu cần. Chưa có cam kết tải production hoặc nghiệm thu thiết bị Android/iOS.

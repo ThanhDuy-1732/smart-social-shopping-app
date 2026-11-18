@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { DomainError } from "@/modules/shared/types";
 import { getConfig } from "./config";
 export function requireOrigin(request: Request) {
@@ -38,6 +39,11 @@ export async function readLimitedBody(
   return result;
 }
 export function apiError(error: unknown): Response {
+  if (error instanceof SyntaxError || error instanceof ZodError)
+    return Response.json(
+      { error: "Dữ liệu gửi lên chưa hợp lệ." },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   if (error instanceof DomainError) {
     const status = {
       UNAUTHENTICATED: 401,

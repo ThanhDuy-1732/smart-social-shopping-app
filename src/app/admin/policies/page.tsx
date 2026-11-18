@@ -15,6 +15,10 @@ export default async function Policies() {
   return (
     <>
       <h1>Chính sách giao dịch</h1>
+      <p className="notice">
+        Phí tính trên tiền hàng sau hoàn, không gồm giao hàng, làm tròn half-up
+        đến VND. Đối soát chờ hết cả thời hạn đổi trả và thời gian giữ tiền.
+      </p>
       <p className="muted">
         Mỗi lần công bố tạo một phiên bản mới. Cần hoàn tất chính sách trước khi
         mở bán và thu tiền thật.

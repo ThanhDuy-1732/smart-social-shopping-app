@@ -105,3 +105,25 @@ test("lists are private, editable and revalidate product visibility", async () =
   });
   expect((await getList(f.buyer, id)).items[0].checked).toBe(true);
 });
+
+test("a sold-out cheap variant cannot make an expensive available variant fit the budget", async () => {
+  const p = f.products[1];
+  const { randomUUID } = await import("node:crypto");
+  await db.query(
+    "UPDATE product SET name='Vali thử ngân sách',search_text='vali thu ngan sach' WHERE id=$1",
+    [p.productId],
+  );
+  await db.query(
+    "INSERT INTO product_variant(id,product_id,shop_id,sku,label,price,stock) VALUES($1,$2,$3,$4,'Bản rẻ hết hàng',50000,0)",
+    [randomUUID(), p.productId, p.shopId, randomUUID()],
+  );
+  const result = await discover(f.buyer, {
+    query: "Tôi muốn đi Trung Quốc",
+    budget: "100000",
+  });
+  expect(
+    result.groups
+      .flatMap((g) => g.products)
+      .some((item) => item.id === p.productId),
+  ).toBe(false);
+});

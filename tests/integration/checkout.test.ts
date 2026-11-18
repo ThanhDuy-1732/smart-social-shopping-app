@@ -146,3 +146,18 @@ test("adding the same variant twice increases quantity instead of replacing it",
     (await getCart(f.other)).find((x) => x.variantId === id)?.quantity,
   ).toBe(2);
 });
+
+test("maintenance switch rejects new checkout", async () => {
+  process.env.CHECKOUT_PAUSED = "true";
+  try {
+    await expect(
+      createCheckout(
+        f.buyer,
+        { address, quoteToken: "0".repeat(64) },
+        randomUUID(),
+      ),
+    ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" });
+  } finally {
+    delete process.env.CHECKOUT_PAUSED;
+  }
+});

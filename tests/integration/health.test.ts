@@ -45,3 +45,14 @@ test("transaction failure rolls back writes", async () => {
       .rowCount,
   ).toBe(0);
 });
+
+test("example secret cannot silently become the application signing key", async () => {
+  const original = process.env.BETTER_AUTH_SECRET;
+  process.env.BETTER_AUTH_SECRET = "GENERATE_WITH_openssl_rand_base64_32";
+  try {
+    const { getConfig } = await import("@/server/config");
+    expect(() => getConfig()).toThrow("configuration");
+  } finally {
+    process.env.BETTER_AUTH_SECRET = original;
+  }
+});

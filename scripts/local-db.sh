@@ -31,6 +31,6 @@ try {
 } finally { await client.end(); }
 const socket = encodeURIComponent(socketPath);
 for (const [file, database] of [['.env.local', 'shopping'], ['.env.test', 'shopping_test']]) {
-  if (!existsSync(file)) writeFileSync(file, `DATABASE_URL=postgresql://shopping@localhost:55439/${database}?host=${socket}\nBETTER_AUTH_SECRET=${randomBytes(32).toString('base64url')}\nBETTER_AUTH_URL=http://127.0.0.1:3000\nMAIL_TRANSPORT=local\n`, { mode: 0o600 });
+  if (!existsSync(file)) writeFileSync(file, `DATABASE_URL=postgresql://shopping@localhost:55439/${database}?host=${socket}\nBETTER_AUTH_SECRET=${randomBytes(32).toString('base64url')}\nBETTER_AUTH_URL=http://127.0.0.1:14388\nMAIL_TRANSPORT=local\n`, { mode: 0o600 });
 }
 NODE

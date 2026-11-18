@@ -287,6 +287,11 @@ export async function createCheckout(
   idempotencyKey: string,
 ): Promise<Checkout> {
   await assertActiveActor(actor);
+  if (process.env.CHECKOUT_PAUSED && process.env.CHECKOUT_PAUSED !== "false")
+    throw new DomainError(
+      "PROVIDER_UNAVAILABLE",
+      "Tạo đơn đang tạm dừng. Giỏ hàng của bạn vẫn được giữ.",
+    );
   const parsed = z
     .object({
       address: addressSchema,

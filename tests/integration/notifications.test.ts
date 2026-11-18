@@ -59,7 +59,10 @@ test("transaction rollback and retries do not duplicate transactional email", as
   ).rows;
   expect(rows).toHaveLength(1);
   mailId = rows[0].id;
-  await db.query("UPDATE background_job SET available_at='2000-01-01' WHERE kind='email.send' AND key=$1",[mailId]);
+  await db.query(
+    "UPDATE background_job SET available_at='2000-01-01' WHERE kind='email.send' AND key=$1",
+    [mailId],
+  );
   for (let i = 0; i < 2; i++) {
     if (
       (await db.query("SELECT status FROM email_outbox WHERE id=$1", [mailId]))

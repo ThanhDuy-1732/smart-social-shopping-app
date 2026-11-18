@@ -33,3 +33,13 @@ test("cross-origin mutations are rejected", () => {
     ),
   ).toThrow();
 });
+
+test("malformed JSON and schema violations return a safe client error", async () => {
+  const { apiError } = await import("@/server/http");
+  const { z } = await import("zod");
+  expect(
+    apiError(new SyntaxError("Unexpected token with private input")).status,
+  ).toBe(400);
+  const parsed = z.uuid().safeParse("invalid");
+  expect(apiError(parsed.error).status).toBe(400);
+});

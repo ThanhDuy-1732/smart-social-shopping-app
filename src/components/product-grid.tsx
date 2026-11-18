@@ -5,6 +5,20 @@ export function ProductGrid({ items }: { items: ProductCard[] }) {
     <div className="grid">
       {items.map((p) => (
         <article className="panel" key={p.id}>
+          {p.coverId && (
+            <Link href={`/products/${p.id}`}>
+              <img
+                src={`/media/${p.coverId}`}
+                alt={p.name}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  objectFit: "cover",
+                  borderRadius: 10,
+                }}
+              />
+            </Link>
+          )}
           <p className="hint">{p.shopName}</p>
           <h2 style={{ fontSize: 22 }}>
             <Link href={`/products/${p.id}`}>{p.name}</Link>

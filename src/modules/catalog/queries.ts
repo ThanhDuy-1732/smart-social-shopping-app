@@ -11,6 +11,7 @@ export type ProductCard = {
   price: string;
   stock: number;
   status: string;
+  coverId: string | null;
 };
 export type CatalogQuery = {
   query?: string;
@@ -37,7 +38,7 @@ const querySchema = z.object({
   limit: z.number().int().min(1).max(50).default(24),
 });
 const columns =
-  'p.id,p.name,p.shop_id AS "shopId",s.name AS "shopName",p.status,min(v.price)::text AS price,coalesce(sum(v.stock-v.reserved),0)::int AS stock';
+  'p.id,p.name,p.shop_id AS "shopId",s.name AS "shopName",p.status,(SELECT pm.media_id FROM product_media pm JOIN media m ON m.id=pm.media_id WHERE pm.product_id=p.id AND m.status=\'ready\' AND m.kind=\'image\' ORDER BY pm.position LIMIT 1) AS "coverId",min(v.price)::text AS price,coalesce(sum(v.stock-v.reserved),0)::int AS stock';
 export async function searchCatalog(
   input: CatalogQuery,
 ): Promise<Page<ProductCard>> {

@@ -6,6 +6,13 @@ import { assertActiveActor, requirePermission } from "@/modules/access/service";
 import { getReadyMedia } from "@/modules/media/service";
 import { DomainError, type Actor } from "@/modules/shared/types";
 import { lockShopFinance } from "./lock";
+function assertPayoutOpen() {
+  if (process.env.PAYOUT_PAUSED && process.env.PAYOUT_PAUSED !== "false")
+    throw new DomainError(
+      "PROVIDER_UNAVAILABLE",
+      "Chi trả đang tạm dừng để kiểm tra đối soát.",
+    );
+}
 export type LedgerEvent = {
   eventKey: string;
   kind: string;
@@ -271,6 +278,7 @@ export async function prepareSettlement(
   cutoff: string,
 ): Promise<string> {
   await requirePermission(actor, "finance.manage");
+  assertPayoutOpen();
   if (
     !z.uuid().safeParse(shopId).success ||
     !z.iso.datetime().safeParse(cutoff).success
@@ -404,6 +412,7 @@ export async function approveSettlement(
   id: string,
 ): Promise<void> {
   await requirePermission(actor, "finance.manage");
+  assertPayoutOpen();
   const shopId = await settlementRef(id);
   await withTransaction(async (c) => {
     await lockShopFinance(c, shopId);
@@ -493,6 +502,7 @@ export async function recordPayout(
   bankReference: string,
 ): Promise<void> {
   await requirePermission(actor, "finance.manage");
+  assertPayoutOpen();
   if (bankReference.trim().length < 3 || bankReference.length > 120)
     throw new DomainError(
       "INVALID_INPUT",

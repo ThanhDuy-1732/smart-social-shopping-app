@@ -3,8 +3,8 @@
 - Phase 1 — nền dự án, tài khoản, quyền, duyệt shop (Tasks 1–3): hoàn tất local.
 - Phase 2 — danh mục/sản phẩm và media (Tasks 4–5): hoàn tất local; cloud media còn chờ.
 - Phase 3 — giỏ hàng, đơn, thanh toán và đối soát (Tasks 6–9): hoàn tất nghiệp vụ local; cổng thanh toán/hoàn tiền còn chờ.
-- Phase 4 — Social, kiểm duyệt, chat và AI (Tasks 10–13): đang thực hiện.
-- Phase 5 — PWA, báo cáo, vận hành và nghiệm thu (Tasks 14–16): chưa thực hiện.
+- Phase 4 — Social, kiểm duyệt, chat và gợi ý (Tasks 10–13): hoàn tất phạm vi local; AI thật còn chờ.
+- Phase 5 — PWA, báo cáo, vận hành và nghiệm thu (Tasks 14–16): đã triển khai local; đang rà soát cuối.
 
 ## Bằng chứng
 
@@ -16,7 +16,7 @@ Chưa có credentials, tài khoản dịch vụ hoặc hợp đồng thanh toán
 
 ## Lưu ý tooling
 
-`npm audit` sau khi cập nhật Zod còn 5 cảnh báo high theo chuỗi picomatch → fdir/tinyglobby → vite/vitest. Đây là công cụ kiểm thử/build, không phải dependency chạy ứng dụng production; npm hiện không cung cấp bản sửa tương thích qua audit fix. Không dùng audit fix --force để hạ version lớn tùy tiện. Cần kiểm tra lại trước phát hành.
+`npm audit` sau khi cập nhật Zod còn 5 cảnh báo high theo chuỗi picomatch → fdir/tinyglobby → vite/vitest. Chuỗi này thuộc công cụ kiểm thử/build nhưng Better Auth khai Vitest như optional peer, nên npm audit --omit=dev vẫn báo 5 high. Không được xem omit=dev là đã loại bỏ chúng; cần kiểm tra artifact/hình thức đóng gói production. Npm hiện không cung cấp bản sửa tương thích qua audit fix. Không dùng audit fix --force để hạ version lớn tùy tiện. Cần kiểm tra lại trước phát hành.
 
 Phase 1: 17 integration tests pass; 2 browser E2E tests pass (đăng ký/xác minh/login, MFA, quyền Admin, đăng ký/duyệt shop, logout, form mobile). Typecheck và production build pass. Tích hợp email thực chưa kiểm chứng.
 
@@ -31,3 +31,6 @@ Chat local: hộp thư riêng, ảnh, thẻ sản phẩm/bài/đơn, trạng th�
 Phase 4 local: Social, kiểm duyệt, chat, gợi ý từ khóa và danh sách chuẩn bị đã có. Chưa tích hợp AI thật; giao diện ghi rõ chế độ local. Không có mô hình local hay tài khoản AI để đánh giá semantic/chi phí.
 
 PWA: manifest/icons, cài đặt khi trình duyệt hỗ trợ, trang offline, cập nhật có xác nhận và không tự ngắt checkout. Cache chỉ gồm trang offline và icons. E2E đổi tài khoản → truy cập chat cũ → offline đã pass; không hiện dữ liệu tài khoản trước. Push có API/worker và đăng ký gắn với phiên, tự hủy liên kết khi logout; chưa có VAPID/contact để thử gửi thật hoặc thiết bị Android/iOS để nghiệm thu.
+
+
+Mốc nghiệm thu local: 81 integration tests và 5 browser E2E pass, typecheck và production build pass. Backup/restore PostgreSQL vào database riêng đã pass. CI YAML được parse, workflow hosted chưa chạy vì chưa có remote/run. Báo cáo có CSV, phạm vi shop/quyền Admin, ranh giới ngày Việt Nam và nguồn đơn được xác minh; không ghi nguyên văn truy vấn tìm kiếm vào analytics. Các mức tải/chi phí production, provider thật và kiểm tra thiết bị vẫn theo launch-checklist.

@@ -77,8 +77,8 @@ export function MediaUploader({
         />
       </label>
       <p className="hint">
-        Tối đa {maxItems} tệp. Ảnh tối đa 10 MB; video MP4 tối đa 50 MB, xử lý
-        tối đa 2 phút.
+        Tối đa {maxItems} tệp. Ảnh tối đa 10 MB.
+        {!imagesOnly && " Video MP4 tối đa 50 MB, xử lý tối đa 2 phút."}
       </p>
       {pending && <p role="status">Đang tải và xử lý tệp…</p>}
       {message && (

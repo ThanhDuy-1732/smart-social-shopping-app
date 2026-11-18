@@ -203,3 +203,21 @@ test("refund approval racing settlement keeps disputed funds out of payout", asy
     getShopFinancials(f.other, f.products[1].shopId),
   ).rejects.toMatchObject({ code: "FORBIDDEN" });
 });
+
+test("payout maintenance switch blocks preparation and approval", async () => {
+  process.env.PAYOUT_PAUSED = "true";
+  try {
+    await expect(
+      prepareSettlement(
+        f.admin,
+        f.products[0].shopId,
+        new Date().toISOString(),
+      ),
+    ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" });
+    await expect(
+      approveSettlement(f.admin, randomUUID()),
+    ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" });
+  } finally {
+    delete process.env.PAYOUT_PAUSED;
+  }
+});
