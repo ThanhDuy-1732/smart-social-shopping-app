@@ -1,3 +1,4 @@
+import { recordConfirmedRefund } from "@/modules/finance/service";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
@@ -46,7 +47,7 @@ export async function requestReturn(
     await lockShopFinance(client, ref.shop_id);
     const row = (
       await client.query(
-        "SELECT o.*,c.buyer_id FROM shop_order o JOIN checkout c ON c.id=o.checkout_id WHERE o.id=$1 FOR UPDATE OF o",
+        "SELECT o.*,c.buyer_id,(o.received_at IS NULL OR clock_timestamp()<=o.received_at+make_interval(days=>(o.policy_snapshot->>'returnDays')::int)) AS within_window FROM shop_order o JOIN checkout c ON c.id=o.checkout_id WHERE o.id=$1 FOR UPDATE OF o",
         [v.orderId],
       )
     ).rows[0];
@@ -64,12 +65,7 @@ export async function requestReturn(
         "CONFLICT",
         "Đơn chưa đủ điều kiện yêu cầu đổi trả.",
       );
-    if (
-      row.received_at &&
-      Date.now() >
-        new Date(row.received_at).getTime() +
-          Number(row.policy_snapshot.returnDays) * 86400000
-    )
+    if (!row.within_window)
       throw new DomainError(
         "CONFLICT",
         "Đã quá thời hạn yêu cầu đổi trả theo chính sách của đơn.",
@@ -160,6 +156,11 @@ export async function approveRefund(
       );
     const maximum =
       BigInt(c.requested_items_amount) + BigInt(c.requested_shipping_amount);
+    if (c.kind === "cancellation" && amount !== maximum)
+      throw new DomainError(
+        "INVALID_INPUT",
+        "Đơn hủy cần hoàn toàn bộ phần tiền còn lại.",
+      );
     if (
       amount > maximum ||
       amount >
@@ -270,6 +271,13 @@ export async function applyVerifiedRefund(input: unknown): Promise<void> {
       ]);
       return;
     }
+    await recordConfirmedRefund(
+      client,
+      ref.order_id,
+      v.refundId,
+      BigInt(refund.amount),
+      BigInt(refund.item_amount),
+    );
     await client.query(
       "UPDATE refund SET status='succeeded',provider_reference=$2 WHERE id=$1",
       [v.refundId, v.providerReference],

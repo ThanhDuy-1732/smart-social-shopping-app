@@ -1,5 +1,6 @@
+import { recordPaymentReceipt } from "@/modules/finance/service";
 import { z } from "zod";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { db, withTransaction } from "@/server/db";
 import { assertActiveActor } from "@/modules/access/service";
 import { DomainError, type Actor } from "@/modules/shared/types";
@@ -53,7 +54,7 @@ export async function applyVerifiedPaymentEvent(input: unknown): Promise<void> {
   await withTransaction(async (client) => {
     const checkout = (
       await client.query(
-        "SELECT id,total::text,status,cancel_reason FROM checkout WHERE id=$1 FOR UPDATE",
+        "SELECT id,total::text,status,cancel_reason,buyer_id FROM checkout WHERE id=$1 FOR UPDATE",
         [reference.checkout_id],
       )
     ).rows[0];
@@ -174,11 +175,29 @@ export async function applyVerifiedPaymentEvent(input: unknown): Promise<void> {
         "UPDATE shop_order SET status='refund_required' WHERE checkout_id=$1",
         [checkout.id],
       );
+      const cancelledOrders = (
+        await client.query(
+          "SELECT id,subtotal,shipping FROM shop_order WHERE checkout_id=$1",
+          [checkout.id],
+        )
+      ).rows;
+      for (const order of cancelledOrders)
+        await client.query(
+          "INSERT INTO return_case(id,order_id,requester_id,kind,reason,requested_items_amount,requested_shipping_amount) VALUES($1,$2,$3,'cancellation','Không thể cấp hàng cho khoản thanh toán đến muộn; cần hoàn đủ tiền hàng và giao hàng.',$4,$5)",
+          [
+            randomUUID(),
+            order.id,
+            checkout.buyer_id,
+            order.subtotal,
+            order.shipping,
+          ],
+        );
       await client.query(
         "INSERT INTO payment_exception(checkout_id,reason) VALUES($1,'CannotFulfillPaidOrder') ON CONFLICT DO NOTHING",
         [checkout.id],
       );
     }
+    await recordPaymentReceipt(client, checkout.id);
     await client.query(
       "UPDATE payment_intent SET status='paid',paid_at=now() WHERE id=$1",
       [payment.id],

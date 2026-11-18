@@ -75,6 +75,9 @@ export async function commerceFixture() {
 export type CommerceFixture = Awaited<ReturnType<typeof commerceFixture>>;
 export async function cleanupCommerce(f: CommerceFixture) {
   const actors: Actor[] = [f.admin, f.buyer, f.other, ...f.owners];
+  await db.query("DELETE FROM settlement WHERE shop_id=ANY($1::text[])", [
+    f.products.map((p) => p.shopId),
+  ]);
   await db.query("DELETE FROM checkout WHERE buyer_id=ANY($1::text[])", [
     actors.map((a) => a.userId),
   ]);

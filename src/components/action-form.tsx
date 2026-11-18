@@ -16,7 +16,7 @@ export function ActionForm({
   return (
     <form action={formAction} className="form">
       <fieldset
-        disabled={pending || disabled}
+        disabled={pending}
         style={{
           border: 0,
           padding: 0,

@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, expect, test } from "vitest";
+import { beforeAll, afterAll, expect, test, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { db } from "@/server/db";
 import { prepareDatabase } from "../fixtures/database";
@@ -24,8 +24,8 @@ afterAll(async () => {
   if (f) await cleanupCommerce(f);
   await db.end();
 });
-async function receive() {
-  const order = await paidOrder(f);
+async function receive(index = 0) {
+  const order = await paidOrder(f, index);
   await transitionOrder(order.owner, order.orderId, { type: "accept" });
   await transitionOrder(order.owner, order.orderId, {
     type: "ship",
@@ -177,5 +177,26 @@ test("return evidence is private to the parties and audited staff access", async
       "DELETE FROM background_job WHERE kind='media.process' AND key=$1",
       [ticket.id],
     );
+  }
+});
+
+test("return deadline uses database time even when the application clock is behind", async () => {
+  const order = await receive(1);
+  const detail = await getOrder(f.buyer, order.orderId);
+  await db.query(
+    "UPDATE shop_order SET received_at=now()-interval '8 days' WHERE id=$1",
+    [order.orderId],
+  );
+  vi.spyOn(Date, "now").mockReturnValue(Date.now() - 20 * 86400000);
+  try {
+    await expect(
+      requestReturn(f.buyer, {
+        orderId: order.orderId,
+        items: [{ itemId: detail.items[0].id, quantity: 1 }],
+        reason: "Yêu cầu sau khi hết thời hạn đổi trả",
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  } finally {
+    vi.restoreAllMocks();
   }
 });

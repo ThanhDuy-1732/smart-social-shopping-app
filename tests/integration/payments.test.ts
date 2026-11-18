@@ -167,6 +167,14 @@ test("late money without available stock is tracked for refund instead of overse
   expect(
     (
       await db.query(
+        "SELECT c.requested_items_amount::text AS items,c.requested_shipping_amount::text AS shipping FROM return_case c JOIN shop_order o ON o.id=c.order_id WHERE o.checkout_id=$1 AND c.kind='cancellation'",
+        [checkout.id],
+      )
+    ).rows,
+  ).toEqual([{ items: "100000", shipping: "30000" }]);
+  expect(
+    (
+      await db.query(
         "SELECT stock-reserved AS available FROM product_variant WHERE id=$1",
         [variant],
       )

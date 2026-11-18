@@ -181,6 +181,7 @@ export async function readMedia(
       }
     }
   }
+  if(!allowed&&actor){const batches=(await db.query('SELECT s.owner_user_id AS owner FROM settlement b JOIN shop s ON s.id=b.shop_id WHERE b.evidence_id=$1',[id])).rows;allowed=batches.some(b=>b.owner===actor.userId);if(!allowed&&batches.length&&(await getAllowedPermissions(actor)).includes('finance.manage')){allowed=true;await db.query("INSERT INTO audit_event(id,actor_id,action,target_id) VALUES($1,$2,'evidence.read',$3)",[randomUUID(),actor.userId,id]);}}
   if (!allowed) throw new DomainError("NOT_FOUND", "Không tìm thấy tệp.");
   return {
     bytes: await readFile(

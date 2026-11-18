@@ -35,7 +35,10 @@ export default async function Seller() {
               </Link>{" "}
               <Link className="button secondary" href="/seller/shipping">
                 Phí giao hàng
-              </Link><Link className="button secondary" href="/seller/orders">Đơn hàng</Link>
+              </Link>
+              <Link className="button secondary" href="/seller/orders">
+                Đơn hàng
+              </Link>
             </p>
           )}
         </div>

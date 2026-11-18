@@ -35,3 +35,9 @@ Chưa triển khai production. Chưa có credentials thanh toán, AI hoặc medi
 Chạy thêm `npm run worker` trong terminal thứ hai. Cần `ffmpeg` có trong PATH (hoặc đặt `FFMPEG_PATH`). Ảnh được decode/resize và chuyển WebP bằng sharp; MP4 được chuyển mã H.264/AAC tối đa 2 phút. Tệp gốc và dữ liệu thư/DB nằm trong `.local/`, không public trực tiếp. Chỉ tệp đã sẵn sàng và được đính vào sản phẩm công khai mới đọc được khi chưa đăng nhập; người tải lên xem được tệp riêng của mình.
 
 Media local phục vụ phát triển một máy, bị chặn upload trong production. Cần dịch vụ media/kho bền vững và kiểm chứng tích hợp trước khi mở cho người dùng thật. Worker giữ job trong PostgreSQL, có lease và retry, không dựa vào bộ nhớ tiến trình.
+
+## Đơn và đối soát local
+
+Nhà bán thiết lập phí tại `/seller/shipping`; khách thêm giỏ và xem tổng tiền trước khi tạo đơn. Đơn giữ hàng 15 phút, worker giải phóng khi hết hạn. Khi chưa kết nối provider, không có nút giả lập thanh toán thành công hoặc callback không xác thực.
+
+Các kiểm thử tạo dữ liệu giao dịch trong database `_test` để kiểm chứng nghiệp vụ. Sổ tài chính ghi bút toán cân đối, chống sự kiện trùng; phí tính trên phần tiền hàng sau hoàn, không gồm giao hàng, làm tròn half-up đến VND. Điều kiện đối soát là đã nhận hàng, hết cả cửa sổ đổi trả/thời gian chờ và không có yêu cầu mở. Chi trả chỉ được ghi nhận thủ công với bằng chứng; ứng dụng không chuyển tiền qua ngân hàng.
