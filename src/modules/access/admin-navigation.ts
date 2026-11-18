@@ -1,4 +1,5 @@
 export const adminNavigation = [
+  { href: "/admin/reports", label: "Báo cáo", permission: "reports.platform" },
   {
     href: "/admin/moderation",
     label: "Kiểm duyệt",

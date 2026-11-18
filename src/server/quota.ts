@@ -2,7 +2,7 @@ import { db } from "./db";
 import { DomainError } from "@/modules/shared/types";
 export async function consumeQuota(
   userId: string,
-  scope: "message" | "comment" | "upload" | "discovery",
+  scope: "message" | "comment" | "upload" | "discovery" | "activity",
   limit: number,
   seconds: number,
 ): Promise<void> {

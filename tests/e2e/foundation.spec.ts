@@ -163,6 +163,13 @@ test("registered seller submits application and an MFA admin reviews it", async 
   await expect(row.getByText("Đã duyệt", { exact: true })).toBeVisible();
   await page.goto("/seller");
   await expect(page.getByText("Đã được duyệt", { exact: true })).toBeVisible();
+  await adminPage.goto("/admin/reports");
+  await expect(
+    adminPage.getByRole("heading", { name: "Báo cáo nền tảng", exact: true }),
+  ).toBeVisible();
+  const reportDownload = adminPage.waitForEvent("download");
+  await adminPage.getByRole("link", { name: "Tải CSV", exact: true }).click();
+  expect((await reportDownload).suggestedFilename()).toBe("bao-cao.csv");
   await adminPage.goto("/admin/categories");
   await adminPage
     .getByLabel("Tên danh mục", { exact: true })

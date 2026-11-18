@@ -1,3 +1,4 @@
+import { ActivityView } from "@/components/activity-view";
 import { listLists } from "@/modules/discovery/service";
 import { saveProductToList } from "@/app/(account)/lists/actions";
 import { optionalActor } from "@/server/optional-actor";
@@ -29,6 +30,7 @@ export default async function Product({
           <Link href={`/shops/${product.shopId}`}>{product.shopName}</Link>
         </p>
         <h1>{product.name}</h1>
+        {actor && <ActivityView kind="product" targetId={product.id} />}
         <Link
           className="button secondary"
           href={`/messages?shop=${product.shopId}&kind=product&ref=${product.id}`}

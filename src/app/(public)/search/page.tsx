@@ -1,3 +1,5 @@
+import { optionalActor } from "@/server/optional-actor";
+import { ActivityView } from "@/components/activity-view";
 import Link from "next/link";
 import { searchCatalog } from "@/modules/catalog/queries";
 import { listCategories } from "@/modules/catalog/service";
@@ -10,6 +12,7 @@ export default async function Search({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const q = await searchParams;
+  const actor = await optionalActor();
   let result, error;
   try {
     result = await searchCatalog({
@@ -31,6 +34,7 @@ export default async function Search({
   return (
     <>
       <h1>Tìm món bạn cần</h1>
+      {actor && q.q && <ActivityView kind="search" targetId={q.q} />}
       <form className="panel form" action="/search">
         <div className="two-col">
           <label>

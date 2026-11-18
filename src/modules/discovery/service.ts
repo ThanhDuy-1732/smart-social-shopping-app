@@ -1,3 +1,4 @@
+import { recordDiscovery } from "@/modules/reporting/service";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/server/db";
@@ -153,6 +154,11 @@ export async function discover(
     }
     groups.push({ ...need, products: visibleProducts, posts: visiblePosts });
   }
+  if (actor)
+    await recordDiscovery(
+      actor,
+      groups.flatMap((g) => g.products.map((p) => p.id)),
+    );
   return {
     mode: "local-keywords",
     notice:

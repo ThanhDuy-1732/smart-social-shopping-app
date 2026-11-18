@@ -1,3 +1,4 @@
+import { checkoutSource } from "@/modules/reporting/service";
 import { z } from "zod";
 import { randomUUID, createHash } from "node:crypto";
 import type { PoolClient } from "pg";
@@ -348,8 +349,15 @@ export async function createCheckout(
     );
     for (const shop of quote.shops) {
       const orderId = randomUUID();
+      const source = await checkoutSource(
+        client,
+        actor,
+        quote.lines
+          .filter((x) => x.shopId === shop.shopId)
+          .map((x) => x.productId),
+      );
       await client.query(
-        "INSERT INTO shop_order(id,checkout_id,shop_id,subtotal,shipping,commission_bps,policy_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7)",
+        "INSERT INTO shop_order(id,checkout_id,shop_id,subtotal,shipping,commission_bps,policy_snapshot,source_kind,source_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
         [
           orderId,
           id,
@@ -358,6 +366,8 @@ export async function createCheckout(
           shop.shipping,
           quote.policy.commissionBps,
           JSON.stringify(quote.policy),
+          source.kind,
+          source.id,
         ],
       );
       for (const line of quote.lines.filter((x) => x.shopId === shop.shopId)) {

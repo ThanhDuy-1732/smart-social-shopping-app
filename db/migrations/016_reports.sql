@@ -1,0 +1,5 @@
+CREATE TABLE activity_event(id text PRIMARY KEY,user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,kind text NOT NULL CHECK(kind IN ('post','product','discovery','search')),target_id text NOT NULL,result_count integer,day date NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(user_id,kind,target_id,day));
+CREATE INDEX activity_time ON activity_event(created_at);
+CREATE TABLE discovery_run(id text PRIMARY KEY,user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,product_ids jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE conversion_touch(user_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,kind text NOT NULL CHECK(kind IN ('post','discovery')),target_id text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE shop_order ADD COLUMN source_kind text NOT NULL DEFAULT 'direct' CHECK(source_kind IN ('direct','post','discovery')),ADD COLUMN source_id text;

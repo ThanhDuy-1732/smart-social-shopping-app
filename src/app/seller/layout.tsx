@@ -15,6 +15,7 @@ export default async function SellerLayout({
         <Link href="/seller/orders">Đơn hàng</Link>
         <Link href="/seller/shipping">Giao hàng</Link>
         <Link href="/seller/finance">Đối soát</Link>
+        <Link href="/seller/reports">Báo cáo</Link>
       </nav>
       {children}
     </PrivateSession>

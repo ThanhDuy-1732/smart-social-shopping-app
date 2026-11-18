@@ -1,3 +1,4 @@
+import { ActivityView } from "@/components/activity-view";
 import { ReportForm } from "@/components/report-form";
 import { notFound } from "next/navigation";
 import { optionalActor } from "@/server/optional-actor";
@@ -17,6 +18,7 @@ export default async function Post({
   return (
     <div style={{ maxWidth: 800, margin: "auto" }}>
       <PostCard post={post} signedIn={Boolean(actor)} />
+      {actor && <ActivityView kind="post" targetId={post.id} />}
       <section className="panel">
         <h2>Bình luận</h2>
         {post.comments.map((c) => (
