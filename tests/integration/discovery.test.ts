@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, test, expect } from "vitest";
+import { beforeAll, afterAll, test, expect, vi } from "vitest";
 import { db } from "@/server/db";
 import { prepareDatabase } from "../fixtures/database";
 import {
@@ -8,6 +8,7 @@ import {
 } from "../fixtures/commerce";
 import { createPost } from "@/modules/social/service";
 import { discover, saveList, getList } from "@/modules/discovery/service";
+import { aiResponse } from "../fixtures/ai";
 let f: CommerceFixture;
 beforeAll(async () => {
   await prepareDatabase();
@@ -126,4 +127,44 @@ test("a sold-out cheap variant cannot make an expensive available variant fit th
       .flatMap((g) => g.products)
       .some((item) => item.id === p.productId),
   ).toBe(false);
+});
+
+test("AI suggestions replace templates when configured, with fallback on failure", async () => {
+  vi.stubEnv("OPENCODE_API_KEY", "test-key");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      aiResponse({
+        question: "Bạn đi mấy ngày?",
+        needs: [
+          {
+            title: "Hành lý chuyến đi",
+            reason: "Chọn theo thời gian và quy định hãng.",
+            optional: false,
+            keywords: ["vali xịn", "túi đựng đồ"],
+          },
+        ],
+      }),
+    ),
+  );
+  const ai = await discover(f.buyer, {
+    query: "Chuyến đi Đà Lạt cuối tuần",
+    budget: "150000",
+  });
+  expect(ai.mode).toBe("ai");
+  expect(ai.question).toBe("Bạn đi mấy ngày?");
+  expect(ai.groups).toHaveLength(1);
+  expect(ai.groups[0].keywords).toContain("vali xịn");
+  expect(
+    ai.groups
+      .flatMap((g) => g.products)
+      .every((x) => BigInt(x.price) <= 150000n),
+  ).toBe(true);
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("gateway down")));
+  const fallback = await discover(f.buyer, {
+    query: "Chuyến đi Đà Lạt cuối tuần",
+  });
+  expect(fallback.mode).toBe("local-keywords");
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });

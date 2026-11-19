@@ -10,7 +10,8 @@ export default defineConfig({
   test: {
     include: ["tests/integration/**/*.test.ts"],
     fileParallelism: false,
-    env,
+    // Integration tests must never reach the paid AI endpoint.
+    env: { ...env, OPENCODE_API_KEY: "" },
     testTimeout: 15000,
   },
 });

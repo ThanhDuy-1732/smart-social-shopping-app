@@ -12,6 +12,7 @@ import {
 } from "@/modules/catalog/queries";
 import { listFeed, getPost, type PostCard } from "@/modules/social/queries";
 import { DomainError, type Actor } from "@/modules/shared/types";
+import { aiNeeds, type Need } from "./ai";
 const inputSchema = z.object({
   query: z.string().trim().min(3).max(300),
   budget: z
@@ -19,14 +20,8 @@ const inputSchema = z.object({
     .regex(/^\d{1,12}$/)
     .optional(),
 });
-type Need = {
-  title: string;
-  reason: string;
-  optional: boolean;
-  keywords: string[];
-};
 export type DiscoveryResult = {
-  mode: "local-keywords";
+  mode: "local-keywords" | "ai";
   notice: string;
   question: string | null;
   groups: (Need & { products: ProductCard[]; posts: PostCard[] })[];
@@ -123,7 +118,8 @@ export async function discover(
     await consumeQuota(actor.userId, "discovery", 10, 60);
   }
   const { query, budget } = parsed.data,
-    { needs, question } = localNeeds(query);
+    ai = await aiNeeds(query, budget),
+    { needs, question } = ai ?? localNeeds(query);
   const groups: DiscoveryResult["groups"] = [];
   for (const need of needs) {
     const products = new Map<string, ProductCard>(),
@@ -170,9 +166,10 @@ export async function discover(
       groups.flatMap((g) => g.products.map((p) => p.id)),
     );
   return {
-    mode: "local-keywords",
-    notice:
-      "Gợi ý local theo mẫu và từ khóa. Chưa kết nối AI; giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách.",
+    mode: ai ? "ai" : "local-keywords",
+    notice: ai
+      ? "Gợi ý do AI đề xuất; giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách."
+      : "Gợi ý local theo mẫu và từ khóa. Chưa kết nối AI; giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách.",
     question,
     groups,
   };
