@@ -51,9 +51,6 @@ export default async function Discover({
             />
           </label>
           <button>Tìm gợi ý</button>
-          <p className="notice">
-            Chế độ local theo mẫu và từ khóa. AI chưa được kết nối.
-          </p>
         </form>
         <p>
           <Link href="/lists">Danh sách đã lưu</Link>
