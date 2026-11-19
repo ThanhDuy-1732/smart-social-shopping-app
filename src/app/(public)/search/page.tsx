@@ -45,7 +45,9 @@ export default async function Search({
   if (result?.nextCursor) next.set("cursor", result.nextCursor);
   return (
     <>
-      <h1>Tìm món bạn cần</h1>
+      <div className="section-intro">
+        <h1>Tìm món bạn cần</h1>
+      </div>
       {actor && q.q && <ActivityView kind="search" targetId={q.q} />}
       <form className="panel form" action="/search">
         <div className="two-col">
@@ -88,7 +90,7 @@ export default async function Search({
             />
           </label>
         </div>
-        <label>
+        <label className="inline-check">
           <input
             type="checkbox"
             name="inStock"

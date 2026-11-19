@@ -1,7 +1,9 @@
-# Hướng giao diện ban đầu
+# Ngôn ngữ giao diện Mình dùng
 
-Tên làm việc: “Mình dùng”, có thể thay trước phát hành. Sản phẩm kết nối trải nghiệm người dùng với mua sắm, không dùng dashboard thống kê giả làm trang khách.
+**Chợ bạn bè** là hướng chính. Nền đào nhạt `#FFF6F2`, thao tác màu mâm xôi `#AF2452`, chữ tím nâu `#352334`. Ảnh và video giữ vai trò chính trong bảng tin. Món đồ gắn với bài hiển thị ảnh và giá từ dữ liệu công khai khi có. Trang chủ giới thiệu cộng đồng bằng một ảnh minh họa Đà Lạt được tạo bằng ImageGen, sau đó hiển thị bài mới từ hệ thống. Khi chưa có bài, trang hướng người dùng đến thao tác đăng bài.
 
-Màu: xanh #2455D6 cho thao tác, nền trắng #FFFFFF, nền phụ #EEF3FE, chữ #18243D, chữ phụ #61718B, điểm nhấn #E56B57. Chữ sans hệ thống hỗ trợ tiếng Việt; tiêu đề lớn, nội dung vừa phải, không tải font ngoài khi build. Header điều hướng chung; nội dung chính căn trái, feed là trọng tâm khi có dữ liệu; Seller/Admin dùng bảng và form dễ đọc. Mobile đổi sang bố cục một cột, nhãn form và focus rõ. Không tạo nội dung xã hội, người dùng hoặc doanh số giả trong production.
+**Tìm theo nhu cầu** dùng chàm `#392996` trên nền tím nhạt `#EDE9FA`. Ô nhập nhu cầu và ngân sách đứng đầu trang. Từng nhóm kết quả giữ liên kết giữa từ khóa, sản phẩm và bài chia sẻ.
 
-Rà soát: tránh landing page SaaS với dãy số vô căn cứ; tập trung CTA đăng ký/chia sẻ và trạng thái trống có hướng dẫn. Các màn chưa triển khai không giả vờ đã hoạt động.
+Thanh điều hướng dưới giúp mở các mục chính trên điện thoại. Tài khoản gom đơn hàng, thông báo và gian hàng trong cùng menu. Seller và Admin dùng cùng màu, nút, kiểu chữ và trạng thái trên bố cục bảng và biểu mẫu. PWA dùng biểu tượng mâm xôi và cùng màu ở trang ngoại tuyến.
+
+Font hệ thống hỗ trợ tiếng Việt. Ảnh trang chủ có bản WebP 1200 px. Không tạo tài khoản, nội dung cộng đồng hoặc giá minh họa trong dữ liệu thật.

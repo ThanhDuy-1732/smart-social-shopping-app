@@ -99,6 +99,23 @@ test("product detail has public delivery estimates and only related visible post
   expect((await getPublicProduct(p.productId))?.shippingRates).toEqual([
     { region: "*", fee: "30000", estimatedDays: 3 },
   ]);
+  expect(
+    (await listFeed(f.buyer, { productId: p.productId })).items[0].products[0],
+  ).toMatchObject({
+    available: true,
+    price: "100000",
+    coverId: null,
+  });
+  await db.query("UPDATE product SET status='hidden' WHERE id=$1", [
+    p.productId,
+  ]);
+  expect(
+    (await listFeed(f.buyer, { productId: p.productId })).items[0].products[0],
+  ).toMatchObject({
+    available: false,
+    price: null,
+    coverId: null,
+  });
   await db.query("UPDATE social_post SET status='hidden' WHERE id=$1", [
     related,
   ]);

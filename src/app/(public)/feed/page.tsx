@@ -29,25 +29,43 @@ export default async function Feed({
   if (result?.nextCursor) next.set("cursor", result.nextCursor);
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Cộng đồng mình dùng</h1>
-          <p className="muted">
-            Một trải nghiệm thật, thêm một góc nhìn khi chọn mua.
-          </p>
+      <div className="section-intro">
+        <div className="page-heading">
+          <div>
+            <h1>Cộng đồng mình dùng</h1>
+            <p className="muted">
+              Một trải nghiệm thật, thêm một góc nhìn khi chọn mua.
+            </p>
+          </div>
+          <Link className="button" href={actor ? "/posts/new" : "/login"}>
+            Chia sẻ trải nghiệm
+          </Link>
         </div>
-        <Link className="button" href={actor ? "/posts/new" : "/login"}>
-          Chia sẻ trải nghiệm
-        </Link>
       </div>
       <nav className="subnav" aria-label="Bảng tin">
-        <Link href="/feed">Khám phá</Link>
-        <Link href="/feed?mode=following">Đang theo dõi</Link>
-        <Link href="/feed?mode=saved">Đã lưu</Link>
+        <Link
+          href="/feed"
+          aria-current={!q.mode || q.mode === "explore" ? "page" : undefined}
+        >
+          Khám phá
+        </Link>
+        <Link
+          href="/feed?mode=following"
+          aria-current={q.mode === "following" ? "page" : undefined}
+        >
+          Đang theo dõi
+        </Link>
+        <Link
+          href="/feed?mode=saved"
+          aria-current={q.mode === "saved" ? "page" : undefined}
+        >
+          Đã lưu
+        </Link>
       </nav>
       <div className="social-layout">
         <section>
           <form action="/feed" className="row search-bar">
+            {q.mode && <input type="hidden" name="mode" value={q.mode} />}
             <input
               aria-label="Tìm bài chia sẻ"
               name="q"

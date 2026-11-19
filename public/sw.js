@@ -1,4 +1,4 @@
-const VERSION='minhdung-static-v1';
+const VERSION='minhdung-static-v2';
 const STATIC=['/offline.html','/icon-192.png','/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(STATIC))));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('minhdung-static-')&&key!==VERSION)await caches.delete(key);await self.clients.claim();})()));

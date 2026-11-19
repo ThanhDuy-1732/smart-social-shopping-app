@@ -9,7 +9,7 @@ export default async function SellerLayout({
   const actor = await pageActor();
   return (
     <PrivateSession key={actor.userId} userId={actor.userId}>
-      <nav className="subnav" aria-label="Gian hàng">
+      <nav className="subnav workspace-nav" aria-label="Gian hàng">
         <Link href="/seller">Tổng quan</Link>
         <Link href="/seller/products">Sản phẩm</Link>
         <Link href="/seller/orders">Đơn hàng</Link>

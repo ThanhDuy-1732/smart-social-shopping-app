@@ -15,14 +15,31 @@ export function SessionNav() {
     <div className="header-actions">
       {data ? (
         <>
-          <Link href="/messages">Tin nhắn</Link>
-          <Link href="/notifications">Thông báo</Link>
-          <Link href="/cart">Giỏ hàng</Link>
-          <Link href="/orders">Đơn mua</Link>
-          <Link href="/seller">Gian hàng</Link>
-          <Link className="button secondary" href="/settings">
-            Tài khoản
+          <Link className="desktop-account-link" href="/messages">
+            Tin nhắn
           </Link>
+          <Link className="desktop-account-link" href="/notifications">
+            Thông báo
+          </Link>
+          <Link href="/cart">Giỏ hàng</Link>
+          <details className="account-menu">
+            <summary>Tài khoản</summary>
+            <nav
+              aria-label="Tài khoản"
+              onClick={(event) => {
+                if ((event.target as HTMLElement).closest("a"))
+                  event.currentTarget
+                    .closest("details")
+                    ?.removeAttribute("open");
+              }}
+            >
+              <Link href="/settings">Cài đặt tài khoản</Link>
+              <Link href="/messages">Tin nhắn</Link>
+              <Link href="/notifications">Thông báo</Link>
+              <Link href="/orders">Đơn mua</Link>
+              <Link href="/seller">Gian hàng</Link>
+            </nav>
+          </details>
         </>
       ) : (
         <>

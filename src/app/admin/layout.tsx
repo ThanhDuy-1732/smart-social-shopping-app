@@ -19,7 +19,7 @@ export default async function AdminLayout({
       userId={actor.userId}
       permissions={allowed}
     >
-      <nav className="subnav" aria-label="Quản trị">
+      <nav className="subnav workspace-nav" aria-label="Quản trị">
         <Link href="/admin">Tổng quan</Link>
         {items
           .filter(

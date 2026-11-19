@@ -24,6 +24,7 @@ export async function socialAction(
       enabled: data.get("enabled") === "true",
       text: data.get("text"),
     });
+    revalidatePath("/");
     revalidatePath("/feed");
     revalidatePath(`/posts/${data.get("targetId")}`);
     revalidatePath(`/users/${data.get("targetId")}`);
@@ -59,6 +60,7 @@ export async function publishPost(
       mediaIds,
       productIds,
     });
+    revalidatePath("/");
     revalidatePath("/feed");
   } catch (error) {
     return actionError(error);
@@ -74,6 +76,7 @@ export async function deletePostAction(
       await requireActor(await headers()),
       String(data.get("postId")),
     );
+    revalidatePath("/");
     revalidatePath("/feed");
   } catch (error) {
     return actionError(error);
@@ -93,6 +96,7 @@ export async function updateProfile(
     });
     revalidatePath("/settings");
     revalidatePath(`/users/${actor.userId}`);
+    revalidatePath("/");
     revalidatePath("/feed");
     return { success: "Đã lưu hồ sơ." };
   } catch (error) {

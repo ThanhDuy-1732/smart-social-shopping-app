@@ -25,40 +25,45 @@ export default async function Discover({
     error = e.message;
   }
   return (
-    <>
-      <p className="eyebrow">Từ nhu cầu đến lựa chọn</p>
-      <h1>Bạn đang chuẩn bị cho điều gì?</h1>
-      <p>Thử “Tôi muốn đi Trung Quốc”, “góc làm việc” hoặc “chăm sóc da”.</p>
-      <p className="notice">
-        Chế độ local theo mẫu và từ khóa. AI chưa được kết nối.
-      </p>
-      <form className="panel" action="/discover">
-        <label>
-          Nhu cầu của bạn
-          <input
-            name="q"
-            defaultValue={q.q ?? ""}
-            minLength={3}
-            maxLength={300}
-            required
-            placeholder="Tôi muốn đi Trung Quốc"
-          />
-        </label>
-        <label>
-          Ngân sách tối đa cho một món (₫)
-          <input
-            name="budget"
-            defaultValue={q.budget ?? ""}
-            inputMode="numeric"
-            pattern="[0-9]{1,12}"
-          />
-        </label>
-        <button>Tìm gợi ý</button>
-      </form>
-      <p>
-        <Link href="/lists">Danh sách đã lưu</Link>
-      </p>
-      {error && <p role="alert">{error}</p>}
+    <div className="discover-surface">
+      <section className="discover-intro">
+        <h1>Bạn đang chuẩn bị cho điều gì?</h1>
+        <p>Thử “Tôi muốn đi Trung Quốc”, “góc làm việc” hoặc “chăm sóc da”.</p>
+        <form className="discover-query" action="/discover">
+          <label>
+            Nhu cầu của bạn
+            <input
+              name="q"
+              defaultValue={q.q ?? ""}
+              minLength={3}
+              maxLength={300}
+              required
+              placeholder="Tôi muốn đi Trung Quốc"
+            />
+          </label>
+          <label>
+            Ngân sách tối đa cho một món (₫)
+            <input
+              name="budget"
+              defaultValue={q.budget ?? ""}
+              inputMode="numeric"
+              pattern="[0-9]{1,12}"
+            />
+          </label>
+          <button>Tìm gợi ý</button>
+          <p className="notice">
+            Chế độ local theo mẫu và từ khóa. AI chưa được kết nối.
+          </p>
+        </form>
+        <p>
+          <Link href="/lists">Danh sách đã lưu</Link>
+        </p>
+      </section>
+      {error && (
+        <p className="notice error" role="alert">
+          {error}
+        </p>
+      )}
       {result && (
         <>
           <p className="muted">{result.notice}</p>
@@ -68,7 +73,7 @@ export default async function Discover({
             </p>
           )}
           {result.groups.map((g) => (
-            <section className="section" key={g.title}>
+            <section className="discover-group" key={g.title}>
               <h2>
                 {g.title}{" "}
                 <small className="muted">
@@ -121,6 +126,6 @@ export default async function Discover({
           </section>
         </>
       )}
-    </>
+    </div>
   );
 }

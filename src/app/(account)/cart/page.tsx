@@ -8,7 +8,9 @@ export default async function Cart() {
   const items = await getCart(actor);
   return (
     <>
-      <h1>Giỏ hàng của bạn</h1>
+      <div className="section-intro">
+        <h1>Giỏ hàng của bạn</h1>
+      </div>
       {!items.length ? (
         <div className="panel empty">
           <h2>Giỏ hàng đang trống</h2>

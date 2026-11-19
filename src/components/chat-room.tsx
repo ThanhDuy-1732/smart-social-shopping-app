@@ -133,13 +133,23 @@ export function ChatRoom({
               Tải tin cũ hơn
             </button>
           )}
-          <div role="log" aria-label="Hội thoại" aria-live="polite">
+          <div
+            className="chat-log"
+            role="log"
+            aria-label="Hội thoại"
+            aria-live="polite"
+          >
             {messages.map((m) => (
-              <article className="card" key={m.id}>
+              <article
+                className={
+                  m.senderId === userId
+                    ? "chat-message chat-message-own"
+                    : "chat-message"
+                }
+                key={m.id}
+              >
                 <strong>{m.senderId === userId ? "Bạn" : room.peerName}</strong>
-                <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                  {m.text}
-                </p>
+                <p className="chat-message-text">{m.text}</p>
                 {m.mediaId && (
                   <img
                     src={`/media/${m.mediaId}`}
@@ -171,7 +181,7 @@ export function ChatRoom({
           {room.blocked || !room.peerActive ? (
             <p className="notice">Không thể gửi tin mới trong hội thoại này.</p>
           ) : (
-            <form onSubmit={send}>
+            <form className="panel chat-composer" onSubmit={send}>
               <fieldset disabled={sending}>
                 <label>
                   Tin nhắn

@@ -1,8 +1,11 @@
 import { PwaControls } from "@/components/pwa-controls";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { SessionNav } from "@/components/session-nav";
+import { SiteNavigation } from "@/components/site-navigation";
+
+export const viewport: Viewport = { themeColor: "#fff1eb" };
 export const metadata: Metadata = {
   title: {
     default: "Mình dùng — Khám phá từ trải nghiệm thật",
@@ -25,16 +28,14 @@ export default function RootLayout({
             <Link className="brand" href="/">
               mình<b>dùng.</b>
             </Link>
-            <nav className="main-nav" aria-label="Điều hướng chính">
-              <Link href="/feed">Cộng đồng</Link>
-              <Link href="/search">Mua sắm</Link>
-              <Link href="/discover">Gợi ý cho bạn</Link>
-            </nav>
+            <SiteNavigation />
             <SessionNav />
           </div>
         </header>
         <main id="content">{children}</main>
-        <PwaControls />
+        <div className="site-install">
+          <PwaControls />
+        </div>
         <footer className="site-footer">
           <span>Mình dùng · Chọn từ trải nghiệm thật.</span>
           <span>

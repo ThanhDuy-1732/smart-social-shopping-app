@@ -13,7 +13,11 @@ export function PostCard({
   return (
     <article className="panel social-card">
       <header className="row">
-        <Link className="avatar" href={`/users/${post.authorId}`}>
+        <Link
+          className="avatar"
+          href={`/users/${post.authorId}`}
+          aria-label={`Hồ sơ của ${post.authorName}`}
+        >
           {post.avatarId ? (
             <img src={`/media/${post.avatarId}`} alt="" />
           ) : (
@@ -53,11 +57,21 @@ export function PostCard({
         )}
       </div>
       {post.products.length > 0 && (
-        <div className="product-tags">
+        <div className="product-tags" aria-label="Món đồ trong bài">
           {post.products.map((p) =>
             p.available ? (
               <Link key={p.id} href={`/products/${p.id}`}>
-                {p.name}
+                {p.coverId && (
+                  <img src={`/media/${p.coverId}`} alt="" loading="lazy" />
+                )}
+                <div>
+                  <strong>{p.name}</strong>
+                  {p.price !== null && (
+                    <small>
+                      Từ {BigInt(p.price).toLocaleString("vi-VN")} ₫
+                    </small>
+                  )}
+                </div>
               </Link>
             ) : (
               <span key={p.id} className="muted">
