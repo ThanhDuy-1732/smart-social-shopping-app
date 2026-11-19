@@ -7,6 +7,14 @@ import { SiteNavigation } from "@/components/site-navigation";
 
 export const viewport: Viewport = { themeColor: "#fff1eb" };
 export const metadata: Metadata = {
+  icons: {
+    icon: { url: "/brand/app-icon-32.png", sizes: "32x32", type: "image/png" },
+    apple: {
+      url: "/brand/app-icon-180.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+  },
   title: {
     default: "Mình dùng — Khám phá từ trải nghiệm thật",
     template: "%s | Mình dùng",

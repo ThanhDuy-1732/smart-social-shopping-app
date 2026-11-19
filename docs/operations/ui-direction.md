@@ -4,6 +4,6 @@
 
 **Tìm theo nhu cầu** dùng chàm `#392996` trên nền tím nhạt `#EDE9FA`. Ô nhập nhu cầu và ngân sách đứng đầu trang. Từng nhóm kết quả giữ liên kết giữa từ khóa, sản phẩm và bài chia sẻ.
 
-Thanh điều hướng dưới giúp mở các mục chính trên điện thoại. Tài khoản gom đơn hàng, thông báo và gian hàng trong cùng menu. Seller và Admin dùng cùng màu, nút, kiểu chữ và trạng thái trên bố cục bảng và biểu mẫu. PWA dùng biểu tượng mâm xôi và cùng màu ở trang ngoại tuyến.
+Thanh điều hướng dưới giúp mở các mục chính trên điện thoại. Tài khoản gom đơn hàng, thông báo và gian hàng trong cùng menu. Seller và Admin dùng cùng màu, nút, kiểu chữ và trạng thái trên bố cục bảng và biểu mẫu. PWA dùng biểu tượng túi mua sắm hình bong bóng trò chuyện trên nền mâm xôi. Có ảnh PNG riêng cho Android maskable và Apple Touch Icon.
 
 Font hệ thống hỗ trợ tiếng Việt. Ảnh trang chủ có bản WebP 1200 px. Không tạo tài khoản, nội dung cộng đồng hoặc giá minh họa trong dữ liệu thật.
