@@ -39,6 +39,7 @@ export async function aiNeeds(
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
         "User-Agent": "smart-social-shopping/0.1",
+        "x-opencode-session": crypto.randomUUID(),
       },
       body: JSON.stringify({
         model: process.env.DISCOVERY_AI_MODEL ?? "deepseek-v4.1-flash",

@@ -31,6 +31,9 @@ test("returns parsed needs and question, calling the OpenCode Go endpoint with t
   expect(body.messages.at(-1).content).toContain("Tôi muốn đi Trung Quốc");
   expect(body.messages.at(-1).content).toContain("150000");
   expect(init.headers.Authorization).toBe("Bearer test-key");
+  expect(init.headers["x-opencode-session"]).toMatch(
+    /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/,
+  );
 });
 
 test("custom DISCOVERY_AI_MODEL overrides the model in the request body", async () => {
