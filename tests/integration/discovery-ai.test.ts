@@ -28,6 +28,7 @@ test("returns parsed needs and question, calling the OpenCode Go endpoint with t
   );
   const body = JSON.parse(init.body);
   expect(body.model).toBe("deepseek-v4.1-flash");
+  expect(body.reasoning_effort).toBe("none");
   expect(body.messages.at(-1).content).toContain("Tôi muốn đi Trung Quốc");
   expect(body.messages.at(-1).content).toContain("150000");
   expect(init.headers.Authorization).toBe("Bearer test-key");

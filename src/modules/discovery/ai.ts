@@ -32,6 +32,7 @@ export async function aiNeeds(
 ): Promise<{ needs: Need[]; question: string | null } | null> {
   const key = process.env.OPENCODE_API_KEY;
   if (!key) return null;
+  const model = process.env.DISCOVERY_AI_MODEL ?? "deepseek-v4.1-flash";
   try {
     const res = await fetch(ENDPOINT, {
       method: "POST",
@@ -42,7 +43,8 @@ export async function aiNeeds(
         "x-opencode-session": crypto.randomUUID(),
       },
       body: JSON.stringify({
-        model: process.env.DISCOVERY_AI_MODEL ?? "deepseek-v4.1-flash",
+        model,
+        reasoning_effort: model.startsWith("deepseek-") ? "none" : undefined,
         messages: [
           { role: "system", content: systemPrompt },
           {
