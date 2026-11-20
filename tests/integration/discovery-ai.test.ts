@@ -83,6 +83,24 @@ test("returns null when the AI content is not JSON", async () => {
   expect(await aiNeeds("Tôi muốn đi Trung Quốc")).toBeNull();
 });
 
+test("tolerates a missing question key and over-length keywords", async () => {
+  const longKeyword = "một từ khóa dài hơn bốn mươi ký tự để kiểm tra dung nạp";
+  expect(longKeyword.length).toBeGreaterThan(40);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      aiResponse({
+        needs: [{ ...oneNeed, keywords: [longKeyword, "vali"] }],
+      }),
+    ),
+  );
+  const r = await aiNeeds("Tôi muốn đi Trung Quốc");
+  expect(r).not.toBeNull();
+  expect(r!.question).toBeNull();
+  expect(r!.needs[0].keywords[0]).toHaveLength(40);
+  expect(r!.needs[0].keywords[1]).toBe("vali");
+});
+
 test("returns null when fetch fails or needs are empty", async () => {
   vi.stubGlobal(
     "fetch",

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { optionalActor } from "@/server/optional-actor";
 import { discover } from "@/modules/discovery/service";
 import { ProductGrid } from "@/components/product-grid";
@@ -12,14 +13,17 @@ export default async function Discover({
   searchParams: Promise<{ q?: string; budget?: string }>;
 }) {
   const q = await searchParams,
-    actor = await optionalActor();
+    actor = await optionalActor(),
+    ip = ((await headers()).get("x-forwarded-for") ?? "")
+      .split(",")[0]
+      .trim();
   let result, error;
   try {
     if (q.q)
       result = await discover(actor, {
         query: q.q,
         budget: q.budget || undefined,
-      });
+      }, ip);
   } catch (e) {
     if (!(e instanceof DomainError)) throw e;
     error = e.message;

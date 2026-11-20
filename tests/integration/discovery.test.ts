@@ -9,6 +9,7 @@ import {
 import { createPost } from "@/modules/social/service";
 import { discover, saveList, getList } from "@/modules/discovery/service";
 import { aiResponse } from "../fixtures/ai";
+import { randomUUID } from "node:crypto";
 let f: CommerceFixture;
 beforeAll(async () => {
   await prepareDatabase();
@@ -165,6 +166,48 @@ test("AI suggestions replace templates when configured, with fallback on failure
     query: "Chuyến đi Đà Lạt cuối tuần",
   });
   expect(fallback.mode).toBe("local-keywords");
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
+
+test("anonymous AI requests are rate limited per IP without touching signed-in quota", async () => {
+  vi.stubEnv("OPENCODE_API_KEY", "test-key");
+  const stub = vi
+    .fn()
+    .mockResolvedValue(
+      aiResponse({
+        question: null,
+        needs: [
+          {
+            title: "Hành lý",
+            reason: "Chọn theo thời gian đi.",
+            optional: false,
+            keywords: ["vali"],
+          },
+        ],
+      }),
+    );
+  vi.stubGlobal("fetch", stub);
+  const ip = randomUUID();
+  for (let i = 0; i < 10; i++)
+    await discover(null, { query: "Chuyến đi Đà Lạt cuối tuần" }, ip);
+  await expect(
+    discover(null, { query: "Chuyến đi Đà Lạt cuối tuần" }, ip),
+  ).rejects.toMatchObject({ code: "RATE_LIMITED" });
+  await expect(
+    discover(null, { query: "Chuyến đi Đà Lạt cuối tuần" }, randomUUID()),
+  ).resolves.toMatchObject({ mode: "ai" });
+  expect(stub).toHaveBeenCalledTimes(11);
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
+
+test("anonymous requests skip the AI spend gate when no key is configured", async () => {
+  vi.stubEnv("OPENCODE_API_KEY", "");
+  vi.stubGlobal("fetch", vi.fn());
+  await expect(
+    discover(null, { query: "Chuyến đi Đà Lạt cuối tuần" }, randomUUID()),
+  ).resolves.toMatchObject({ mode: "local-keywords" });
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });

@@ -2,7 +2,7 @@ import { recordDiscovery } from "@/modules/reporting/service";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { consumeQuota } from "@/server/quota";
+import { consumeAnonQuota, consumeQuota } from "@/server/quota";
 import { assertActiveActor } from "@/modules/access/service";
 import { normalizeSearch } from "@/modules/catalog/schema";
 import {
@@ -106,6 +106,7 @@ function localNeeds(query: string): { needs: Need[]; question: string | null } {
 export async function discover(
   actor: Actor | null,
   input: unknown,
+  ip?: string,
 ): Promise<DiscoveryResult> {
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success)
@@ -113,12 +114,15 @@ export async function discover(
       "INVALID_INPUT",
       "Nhập nhu cầu từ 3–300 ký tự và ngân sách bằng số đồng.",
     );
+  const { query, budget } = parsed.data,
+    aiConfigured = Boolean(process.env.OPENCODE_API_KEY);
   if (actor) {
     await assertActiveActor(actor);
     await consumeQuota(actor.userId, "discovery", 10, 60);
-  }
-  const { query, budget } = parsed.data,
-    ai = await aiNeeds(query, budget),
+  } else if (aiConfigured)
+    // AI calls cost money; gate anonymous spend per request IP.
+    await consumeAnonQuota(ip || "unknown", "discovery-anon", 10, 300);
+  const ai = await aiNeeds(query, budget),
     { needs, question } = ai ?? localNeeds(query);
   const groups: DiscoveryResult["groups"] = [];
   for (const need of needs) {
