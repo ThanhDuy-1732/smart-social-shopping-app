@@ -173,7 +173,7 @@ export async function discover(
     mode: ai ? "ai" : "local-keywords",
     notice: ai
       ? "Gợi ý do AI đề xuất; giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách."
-      : "Gợi ý local theo mẫu và từ khóa. Chưa kết nối AI; giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách.",
+      : "Gợi ý theo mẫu và từ khóa. Giá và tồn kho lấy từ sản phẩm đang bán. Ngân sách lọc giá từng món, chưa phải tổng chi phí cả danh sách.",
     question,
     groups,
   };

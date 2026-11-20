@@ -32,27 +32,32 @@ export async function aiNeeds(
 ): Promise<{ needs: Need[]; question: string | null } | null> {
   const key = process.env.OPENCODE_API_KEY;
   if (!key) return null;
-  const model = process.env.DISCOVERY_AI_MODEL ?? "deepseek-v4.1-flash";
+  const headers = {
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    "User-Agent": "smart-social-shopping/0.1",
+    "x-opencode-session": crypto.randomUUID(),
+  };
+  const message =
+    query + (budget ? `\nNgân sách tối đa mỗi món: ${budget} đồng.` : "");
+  return (
+    (await fetchNeeds("glm-5.3-flash", headers, message)) ??
+    (await fetchNeeds("deepseek-v4.1-flash", headers, message))
+  );
+}
+
+async function fetchNeeds(model: string, headers: HeadersInit, message: string) {
   try {
     const res = await fetch(ENDPOINT, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-        "User-Agent": "smart-social-shopping/0.1",
-        "x-opencode-session": crypto.randomUUID(),
-      },
+      headers,
+      redirect: "error",
       body: JSON.stringify({
         model,
-        reasoning_effort: model.startsWith("deepseek-") ? "none" : undefined,
+        reasoning_effort: model === "deepseek-v4.1-flash" ? "none" : undefined,
         messages: [
           { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content:
-              query +
-              (budget ? `\nNgân sách tối đa mỗi món: ${budget} đồng.` : ""),
-          },
+          { role: "user", content: message },
         ],
         temperature: 0.3,
         max_tokens: 1000,
@@ -61,7 +66,7 @@ export async function aiNeeds(
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
-      console.warn("OpenCode Go returned HTTP", res.status);
+      console.warn("OpenCode Go returned HTTP", res.status, model);
       return null;
     }
     const data = (await res.json()) as {
@@ -69,7 +74,7 @@ export async function aiNeeds(
     };
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
-      console.warn("OpenCode Go returned no message content");
+      console.warn("OpenCode Go returned no message content", model);
       return null;
     }
     const parsed = tolerantSchema.parse(JSON.parse(content));
@@ -85,6 +90,7 @@ export async function aiNeeds(
   } catch (error) {
     console.warn(
       "OpenCode Go suggestions failed",
+      model,
       error instanceof Error ? error.name : "UnknownError",
     );
     return null;

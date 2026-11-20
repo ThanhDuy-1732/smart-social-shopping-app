@@ -27,27 +27,56 @@ test("returns parsed needs and question, calling the OpenCode Go endpoint with t
     "https://opencode.ai/inference/go/openai/v1/chat/completions",
   );
   const body = JSON.parse(init.body);
-  expect(body.model).toBe("deepseek-v4.1-flash");
-  expect(body.reasoning_effort).toBe("none");
+  expect(body.model).toBe("glm-5.3-flash");
+  expect(body.reasoning_effort).toBeUndefined();
   expect(body.messages.at(-1).content).toContain("Tôi muốn đi Trung Quốc");
   expect(body.messages.at(-1).content).toContain("150000");
   expect(init.headers.Authorization).toBe("Bearer test-key");
   expect(init.headers["x-opencode-session"]).toMatch(
     /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/,
   );
+  expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
-test("custom DISCOVERY_AI_MODEL overrides the model in the request body", async () => {
-  vi.stubEnv("DISCOVERY_AI_MODEL", "deepseek-v4-pro");
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValue(aiResponse({ question: null, needs: [oneNeed] }));
-  vi.stubGlobal("fetch", fetchMock);
-  await aiNeeds("Tôi cần góc làm việc");
-  expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe(
-    "deepseek-v4-pro",
-  );
-});
+test.each(["HTTP error", "timeout", "invalid JSON"])(
+  "retries with DeepSeek on OpenCode Go when GLM fails with %s",
+  async (failure) => {
+    const fetchMock = vi.fn();
+    if (failure === "HTTP error") {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    } else if (failure === "timeout") {
+      fetchMock.mockRejectedValueOnce(
+        new DOMException("timed out", "TimeoutError"),
+      );
+    } else {
+      fetchMock.mockResolvedValueOnce(
+        Response.json({ choices: [{ message: { content: "not JSON" } }] }),
+      );
+    }
+    fetchMock.mockResolvedValueOnce(
+      aiResponse({ question: null, needs: [oneNeed] }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(aiNeeds("Tôi cần góc làm việc", "150000")).resolves.toEqual({
+      question: null,
+      needs: [oneNeed],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [[primaryUrl, primary], [fallbackUrl, fallback]] =
+      fetchMock.mock.calls;
+    expect(primaryUrl).toBe(
+      "https://opencode.ai/inference/go/openai/v1/chat/completions",
+    );
+    expect(fallbackUrl).toBe(primaryUrl);
+    expect(fallback.headers).toEqual(primary.headers);
+    expect(JSON.parse(fallback.body)).toEqual({
+      ...JSON.parse(primary.body),
+      model: "deepseek-v4.1-flash",
+      reasoning_effort: "none",
+    });
+  },
+);
 
 test("trims excess output to 4 needs and 5 keywords", async () => {
   const excess = Array.from({ length: 5 }, (_, i) => ({
@@ -106,16 +135,11 @@ test("tolerates a missing question key and over-length keywords", async () => {
 });
 
 test("returns null when fetch fails or needs are empty", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockRejectedValue(new Error("gateway down")),
-  );
+  const fetchMock = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("gateway down"))
+    .mockResolvedValueOnce(aiResponse({ question: null, needs: [] }));
+  vi.stubGlobal("fetch", fetchMock);
   expect(await aiNeeds("Tôi muốn đi Trung Quốc")).toBeNull();
-  vi.stubGlobal(
-    "fetch",
-    vi
-      .fn()
-      .mockResolvedValue(aiResponse({ question: null, needs: [] })),
-  );
-  expect(await aiNeeds("Tôi muốn đi Trung Quốc")).toBeNull();
+  expect(fetchMock).toHaveBeenCalledTimes(2);
 });
