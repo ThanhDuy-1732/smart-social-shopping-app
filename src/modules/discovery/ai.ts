@@ -7,7 +7,7 @@ export type Need = {
   keywords: string[];
 };
 
-const ENDPOINT = "https://opencode.ai/inference/openai/v1/chat/completions";
+const ENDPOINT = "https://opencode.ai/inference/go/openai/v1/chat/completions";
 
 const systemPrompt =
   'Bạn là trợ lý mua sắm tiếng Việt. Người dùng mô tả nhu cầu chuẩn bị cho một hoạt động. Trả về CHỈ JSON hợp lệ, không thêm chữ nào khác, theo mẫu: {"question": câu hỏi làm rõ ngắn bằng tiếng Việt hoặc null, "needs": mảng 1-4 nhóm cần chuẩn bị, mỗi nhóm gồm "title" (tối đa 60 ký tự), "reason" (lý do cần chuẩn bị, tối đa 160 ký tự), "optional" (boolean), "keywords" (mảng 2-5 từ khóa tiếng Việt để tìm sản phẩm, mỗi từ khóa tối đa 40 ký tự)}. Không gợi ý sản phẩm hay cửa hàng cụ thể, chỉ từ khóa.';
@@ -38,6 +38,7 @@ export async function aiNeeds(
       headers: {
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
+        "User-Agent": "smart-social-shopping/0.1",
       },
       body: JSON.stringify({
         model: process.env.DISCOVERY_AI_MODEL ?? "deepseek-v4.1-flash",
@@ -56,12 +57,18 @@ export async function aiNeeds(
       }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn("OpenCode Go returned HTTP", res.status);
+      return null;
+    }
     const data = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
     };
     const content = data.choices?.[0]?.message?.content;
-    if (!content) return null;
+    if (!content) {
+      console.warn("OpenCode Go returned no message content");
+      return null;
+    }
     const parsed = tolerantSchema.parse(JSON.parse(content));
     return {
       question: parsed.question ? parsed.question.slice(0, 300) : null,
@@ -72,7 +79,11 @@ export async function aiNeeds(
         keywords: need.keywords.slice(0, 5).map((k) => k.slice(0, 40)),
       })),
     };
-  } catch {
+  } catch (error) {
+    console.warn(
+      "OpenCode Go suggestions failed",
+      error instanceof Error ? error.name : "UnknownError",
+    );
     return null;
   }
 }

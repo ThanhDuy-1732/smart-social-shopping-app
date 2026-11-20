@@ -15,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("returns parsed needs and question, calling the OpenCode endpoint with the default model", async () => {
+test("returns parsed needs and question, calling the OpenCode Go endpoint with the default model", async () => {
   const fetchMock = vi.fn().mockResolvedValue(
     aiResponse({ question: "Đi mấy ngày?", needs: [oneNeed] }),
   );
@@ -24,7 +24,7 @@ test("returns parsed needs and question, calling the OpenCode endpoint with the 
   expect(r).toEqual({ question: "Đi mấy ngày?", needs: [oneNeed] });
   const [url, init] = fetchMock.mock.calls[0];
   expect(String(url)).toBe(
-    "https://opencode.ai/inference/openai/v1/chat/completions",
+    "https://opencode.ai/inference/go/openai/v1/chat/completions",
   );
   const body = JSON.parse(init.body);
   expect(body.model).toBe("deepseek-v4.1-flash");
