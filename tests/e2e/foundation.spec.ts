@@ -219,7 +219,7 @@ test("registered seller submits application and an MFA admin reviews it", async 
     .getByRole("link", { name: "Sản phẩm kiểm tra E2E", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Sản phẩm kiểm tra E2E" }),
+    page.getByRole("heading", { name: "Sản phẩm kiểm tra E2E", level: 1 }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Thêm vào giỏ", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Đã thêm");
@@ -338,9 +338,7 @@ test("private chat delivers between two sessions, rejects outsiders and reconnec
   await page.goto(
     "/discover?q=" + encodeURIComponent("Tôi muốn đi Trung Quốc"),
   );
-  await expect(
-    page.getByText("Chế độ local theo mẫu và từ khóa. AI chưa được kết nối."),
-  ).toBeVisible();
+  await expect(page.getByText("Gợi ý theo mẫu và từ khóa.")).toBeVisible();
   await page
     .getByRole("textbox", { name: "Tên danh sách", exact: true })
     .fill("Hành lý chuyến đi");

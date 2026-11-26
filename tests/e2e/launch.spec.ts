@@ -10,9 +10,7 @@ test("public discovery works locally and unconfigured payment never reports succ
   await expect(
     page.getByRole("heading", { name: /Hành lý và sắp xếp/ }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Chế độ local theo mẫu và từ khóa. AI chưa được kết nối."),
-  ).toBeVisible();
+  await expect(page.getByText("Gợi ý theo mẫu và từ khóa.")).toBeVisible();
   expect(
     (
       await page.request.post("/api/webhooks/payment", {
